@@ -64,77 +64,13 @@ When Claude Code needs your input—a question, approval, or notification—you 
 
 ## 📱 Telnyx Setup
 
-<details>
-<summary><b>First-time Telnyx setup (click to expand)</b></summary>
+See **[TELNYX.md](./TELNYX.md)** for complete setup instructions including:
 
-### 1. Create Telnyx Account
-
-1. Go to [telnyx.com](https://telnyx.com) and click **Sign Up**
-2. Complete registration and verify email
-3. Complete **KYC verification** (government-issued ID required)
-4. Add payment method (pay-as-you-go, no minimums)
-
-### 2. Purchase Phone Number
-
-1. In [Mission Control Portal](https://portal.telnyx.com), go to **Numbers** → **Search & Buy**
-2. Search for numbers (filter by SMS capability)
-3. Purchase a number (~$1/month for US local)
-
-### 3. Create Messaging Profile
-
-1. Go to **Messaging** → **Programmable Messaging**
-2. Click **Add New Profile**
-3. Name it (e.g., "claude-sms")
-4. Under **Inbound Settings**, you'll add the webhook URL later
-5. Leave all optional settings at defaults (number pool, MMS, spend limits — unchecked)
-6. Click **Save**
-
-### 4. Assign Number to Profile
-
-1. Go to **Numbers** → **My Numbers**
-2. Find your number, click the **Messaging Profile** dropdown
-3. Select the profile you created
-4. Accept the monthly charge prompt
-
-### 5. Generate API Key
-
-1. Go to **API Keys** (left sidebar under "Auth")
-2. Ensure you're in **Auth V2**
-3. Click **Create API Key**
-4. **Save this key immediately** — you won't see it again!
-
-### 6. 10DLC Registration (US only)
-
-**Required for US SMS.** Without 10DLC registration, messages will be blocked by carriers.
-
-#### Step A: Register Your Brand ($4.50 one-time)
-
-1. Go to **Messaging** → **10DLC** → **Brands** → **Create Brand**
-2. Provide business information:
-   - **With EIN**: Legal company name, EIN, address (must match IRS Form CP-575)
-   - **Sole Proprietor**: Name, address, government-issued ID, SSN
-3. Submit and wait for verification (usually instant, sometimes 24-48 hours)
-
-#### Step B: Create a Campaign ($15 + monthly fee)
-
-1. Go to **Campaigns** → **Create Campaign**
-2. Select your brand and use case type:
-   - **Low Volume Mixed** ($1.50/month) — recommended for personal/developer use
-   - **Standard** ($10/month) — higher throughput
-3. Provide required details:
-   - Sample messages you'll send
-   - Opt-in/opt-out message templates
-   - Brief description of your use case (e.g., "Developer notifications from coding assistant")
-4. Submit for review (1-2 business days)
-
-#### Step C: Assign Number to Campaign
-
-1. Once campaign is approved, go to campaign settings
-2. Add your phone number to the campaign
-
-> **Important**: As of Feb 2025, unregistered 10DLC traffic is **blocked entirely** by US carriers. See [Telnyx 10DLC Guide](https://support.telnyx.com/en/articles/6325731-register-for-10dlc-messaging) for details.
-
-</details>
+- Account creation and phone number purchase
+- Messaging profile configuration
+- **10DLC registration** (required for US SMS) with step-by-step form guidance
+- Webhook and signature verification setup
+- Troubleshooting common issues
 
 ---
 
@@ -171,14 +107,9 @@ This starts the SMS bridge server and automatically creates a public webhook URL
 
 ### 4. Configure Telnyx Webhook
 
-1. Go to [Telnyx Portal](https://portal.telnyx.com)
-2. Navigate to **Messaging** → **Messaging Profiles**
-3. Create or select a messaging profile
-4. Under "Inbound Settings", set webhook URL to:
-   ```
-   https://your-tunnel-url.trycloudflare.com/webhook/telnyx
-   ```
-   (The URL is displayed when you start the server)
+Set your webhook URL in Telnyx to receive SMS replies. See [TELNYX.md - Webhook Configuration](./TELNYX.md#6-webhook-configuration) for details.
+
+The webhook URL is displayed when you start the server (e.g., `https://xxx.trycloudflare.com/webhook/telnyx`).
 
 ### 5. Test the Setup
 
@@ -304,6 +235,7 @@ With session ID (multiple sessions):
 | `TELNYX_API_KEY` | Yes | API Key from Auth V2 (starts with `KEY...`) |
 | `TELNYX_FROM_NUMBER` | Yes | Your Telnyx number in E.164 format (e.g., `+15551234567`) |
 | `SMS_USER_PHONE` | Yes | Your mobile in E.164 format (e.g., `+15559876543`) |
+| `TELNYX_WEBHOOK_PUBLIC_KEY` | Yes | Public key for webhook signature verification (see [TELNYX.md](./TELNYX.md#6-webhook-configuration)) |
 | `SMS_BRIDGE_URL` | No | Bridge server URL (default: localhost:3847) |
 | `SMS_BRIDGE_PORT` | No | Server port (default: 3847) |
 | `CLOUDFLARE_TUNNEL_ID` | No | Tunnel ID for persistent URL (see below) |
@@ -402,7 +334,8 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 1. Check environment variables: `npx claude-sms config`
 2. Verify Telnyx API key in [Telnyx Portal](https://portal.telnyx.com)
 3. Ensure phone number is SMS-capable and assigned to a messaging profile
-4. Check server logs for errors
+4. **US numbers**: Verify 10DLC registration is complete (see [TELNYX.md](./TELNYX.md#5-10dlc-registration-us-only))
+5. Check server logs for errors
 </details>
 
 <details>
@@ -433,10 +366,14 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 <details>
 <summary><b>🇺🇸 US Messages Not Delivering</b></summary>
 
-1. Verify 10DLC registration is complete in [Telnyx Portal](https://portal.telnyx.com)
-2. Check campaign status is "Approved"
-3. Ensure phone number is assigned to registered campaign
-4. US carriers heavily filter unregistered A2P traffic
+See [TELNYX.md - 10DLC Registration](./TELNYX.md#5-10dlc-registration-us-only) for complete setup guide.
+
+**Quick checklist:**
+1. Brand status is "Verified"
+2. Campaign status is "Approved"
+3. Phone number is assigned to campaign
+
+US carriers block all unregistered A2P traffic with error code `40010`.
 </details>
 
 ---
@@ -535,3 +472,4 @@ MIT — See [LICENSE](./LICENSE) for details.
 
 - **Issues**: [GitHub Issues](https://github.com/chris-bluera/claude-sms/issues)
 - **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
+- **Telnyx Setup**: [TELNYX.md](./TELNYX.md)
