@@ -13,6 +13,7 @@
 
 - [Why Claude SMS?](#-why-claude-sms)
 - [Features](#-features)
+- [Telnyx Setup](#-telnyx-setup)
 - [Quick Start](#-quick-start)
 - [Quick Reference](#-quick-reference)
 - [Usage](#-usage)
@@ -56,7 +57,62 @@ When Claude Code needs your input—a question, approval, or notification—you 
 - **🔀 Multi-Session** — Track multiple Claude Code sessions independently
 - **⚡ Easy Toggle** — Enable/disable SMS with `/sms on` or `/sms off`
 - **🌐 Built-in Tunnel** — Automatic webhook exposure via cloudflared
-- **🔒 Persistent URLs** — Optional stable tunnel URLs (no Twilio reconfiguration)
+- **🔒 Persistent URLs** — Optional stable tunnel URLs (no Telnyx reconfiguration)
+- **💰 Cost Effective** — Telnyx offers ~52% savings vs alternatives ($0.004/SMS)
+
+---
+
+## 📱 Telnyx Setup
+
+<details>
+<summary><b>First-time Telnyx setup (click to expand)</b></summary>
+
+### 1. Create Telnyx Account
+
+1. Go to [telnyx.com](https://telnyx.com) and click **Sign Up**
+2. Complete registration and verify email
+3. Add payment method (pay-as-you-go, no minimums)
+
+### 2. Purchase Phone Number
+
+1. In [Mission Control Portal](https://portal.telnyx.com), go to **Numbers** → **Search & Buy**
+2. Search for numbers (filter by SMS capability)
+3. Purchase a number (~$1/month for US local)
+
+### 3. Create Messaging Profile
+
+1. Go to **Messaging** → **Programmable Messaging**
+2. Click **Add New Profile**
+3. Name it (e.g., "claude-sms")
+4. Under **Inbound Settings**, you'll add the webhook URL later
+5. Click **Save**
+
+### 4. Assign Number to Profile
+
+1. Go to **Numbers** → **My Numbers**
+2. Find your number, click the **Messaging Profile** dropdown
+3. Select the profile you created
+4. Accept the monthly charge prompt
+
+### 5. Generate API Key
+
+1. Go to **API Keys** (left sidebar under "Auth")
+2. Ensure you're in **Auth V2**
+3. Click **Create API Key**
+4. **Save this key immediately** — you won't see it again!
+
+### 6. 10DLC Registration (US only)
+
+For US SMS, you must register your use case to avoid carrier filtering:
+
+1. Go to **Messaging** → **10DLC**
+2. Register your **Brand** (your business/personal info)
+3. Create a **Campaign** (describe your SMS use case)
+4. Wait for approval (usually 1-2 business days)
+
+> **Note**: Without 10DLC registration, US SMS may be filtered or blocked by carriers.
+
+</details>
 
 ---
 
@@ -65,7 +121,7 @@ When Claude Code needs your input—a question, approval, or notification—you 
 ### Prerequisites
 
 - Node.js 18+ (via nvm recommended for WSL)
-- Twilio account with SMS-capable phone number
+- Telnyx account with SMS-capable phone number
 
 ### 1. Install the Plugin
 
@@ -76,9 +132,8 @@ claude /plugin add github.com/chris-bluera/claude-sms
 ### 2. Set Environment Variables
 
 ```bash
-export TWILIO_ACCOUNT_SID=ACxxxxxxxxxx
-export TWILIO_AUTH_TOKEN=your-auth-token
-export TWILIO_FROM_NUMBER=+1234567890
+export TELNYX_API_KEY=your-api-key
+export TELNYX_FROM_NUMBER=+1234567890
 export SMS_USER_PHONE=+1987654321
 ```
 
@@ -92,13 +147,14 @@ npx claude-sms server
 
 This starts the SMS bridge server and automatically creates a public webhook URL via cloudflared.
 
-### 4. Configure Twilio Webhook
+### 4. Configure Telnyx Webhook
 
-1. Go to [Twilio Console](https://console.twilio.com)
-2. Navigate to **Phone Numbers** → **Your Number**
-3. Under "Messaging", set webhook URL to:
+1. Go to [Telnyx Portal](https://portal.telnyx.com)
+2. Navigate to **Messaging** → **Messaging Profiles**
+3. Create or select a messaging profile
+4. Under "Inbound Settings", set webhook URL to:
    ```
-   https://your-tunnel-url.trycloudflare.com/webhook/twilio
+   https://your-tunnel-url.trycloudflare.com/webhook/telnyx
    ```
    (The URL is displayed when you start the server)
 
@@ -174,9 +230,9 @@ npx claude-sms status   # Check server and settings
 
 1. Claude Code triggers a hook (notification, tool use, etc.)
 2. Hook sends message to bridge server
-3. Bridge server sends SMS via Twilio
+3. Bridge server sends SMS via Telnyx
 4. User replies via SMS
-5. Twilio webhook delivers reply to bridge server
+5. Telnyx webhook delivers reply to bridge server
 6. Hook retrieves response and returns it to Claude Code
 
 ---
@@ -223,10 +279,9 @@ With session ID (multiple sessions):
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `TWILIO_ACCOUNT_SID` | Yes | Twilio Account SID |
-| `TWILIO_AUTH_TOKEN` | Yes | Twilio Auth Token |
-| `TWILIO_FROM_NUMBER` | Yes | Your Twilio phone number |
-| `SMS_USER_PHONE` | Yes | Your mobile number |
+| `TELNYX_API_KEY` | Yes | API Key from Auth V2 (starts with `KEY...`) |
+| `TELNYX_FROM_NUMBER` | Yes | Your Telnyx number in E.164 format (e.g., `+15551234567`) |
+| `SMS_USER_PHONE` | Yes | Your mobile in E.164 format (e.g., `+15559876543`) |
 | `SMS_BRIDGE_URL` | No | Bridge server URL (default: localhost:3847) |
 | `SMS_BRIDGE_PORT` | No | Server port (default: 3847) |
 | `CLOUDFLARE_TUNNEL_ID` | No | Tunnel ID for persistent URL (see below) |
@@ -234,7 +289,7 @@ With session ID (multiple sessions):
 
 ### Persistent Tunnel URL
 
-By default, the server creates a random tunnel URL each time it starts (e.g., `https://random-words.trycloudflare.com`). This requires updating your Twilio webhook URL after each restart.
+By default, the server creates a random tunnel URL each time it starts (e.g., `https://random-words.trycloudflare.com`). This requires updating your Telnyx webhook URL after each restart.
 
 For a persistent URL that never changes:
 
@@ -290,8 +345,8 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 <summary><b>❌ SMS Not Sending</b></summary>
 
 1. Check environment variables: `npx claude-sms config`
-2. Verify Twilio credentials in [Twilio Console](https://console.twilio.com)
-3. Ensure phone number is SMS-capable
+2. Verify Telnyx API key in [Telnyx Portal](https://portal.telnyx.com)
+3. Ensure phone number is SMS-capable and assigned to a messaging profile
 4. Check server logs for errors
 </details>
 
@@ -299,7 +354,7 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 <summary><b>📭 Response Not Received</b></summary>
 
 1. Verify tunnel is running: look for URL in server output
-2. Check Twilio webhook configuration matches tunnel URL
+2. Check Telnyx messaging profile webhook configuration matches tunnel URL
 3. Ensure session ID matches in reply (`[CC-xxx]` prefix)
 </details>
 
@@ -318,6 +373,15 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 2. Check cloudflared logs in server output
 3. For persistent tunnels, verify `CLOUDFLARE_TUNNEL_ID` matches your tunnel name
 4. Check DNS configuration in Cloudflare dashboard
+</details>
+
+<details>
+<summary><b>🇺🇸 US Messages Not Delivering</b></summary>
+
+1. Verify 10DLC registration is complete in [Telnyx Portal](https://portal.telnyx.com)
+2. Check campaign status is "Approved"
+3. Ensure phone number is assigned to registered campaign
+4. US carriers heavily filter unregistered A2P traffic
 </details>
 
 ---
@@ -373,7 +437,7 @@ This provides:
 ## 🔬 Technologies
 
 - **[Commander.js](https://github.com/tj/commander.js)** — CLI framework
-- **[Twilio SDK](https://github.com/twilio/twilio-node)** — SMS sending/receiving
+- **[Telnyx](https://telnyx.com)** — SMS sending/receiving (~52% cheaper than alternatives)
 - **[cloudflared](https://github.com/cloudflare/cloudflared)** — Secure tunnel for webhooks
 - **[TypeScript](https://www.typescriptlang.org/)** — Type-safe development
 - **[Vitest](https://vitest.dev/)** — Testing framework
@@ -384,9 +448,11 @@ This provides:
 
 | Service | Cost |
 |---------|------|
-| Twilio SMS (US) | ~$0.0079/message |
+| Telnyx phone number | ~$1/month |
+| Telnyx SMS (US) | ~$0.004/message |
+| 10DLC registration | One-time ~$4-15 |
 | Cloudflared tunnel | Free |
-| **Estimated monthly (moderate use)** | **$5-15** |
+| **Estimated monthly (moderate use)** | **$3-10** |
 
 ---
 
