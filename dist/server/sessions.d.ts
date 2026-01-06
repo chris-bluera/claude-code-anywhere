@@ -39,12 +39,14 @@ declare class SessionManager {
     getSessionCount(): number;
     /**
      * Enable SMS for a session
+     * @throws Error if session does not exist
      */
-    enableSession(sessionId: string): boolean;
+    enableSession(sessionId: string): void;
     /**
      * Disable SMS for a session
+     * @throws Error if session does not exist
      */
-    disableSession(sessionId: string): boolean;
+    disableSession(sessionId: string): void;
     /**
      * Check if a session is enabled
      * @throws Error if session does not exist

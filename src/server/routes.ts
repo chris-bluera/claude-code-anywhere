@@ -119,13 +119,13 @@ export async function handleTelnyxWebhook(
     rawData = parseJSON(body);
   } catch (error) {
     console.warn('[webhook] Invalid JSON in Telnyx webhook:', error);
-    sendText(res, 200, '');
+    sendError(res, 400, 'Invalid JSON');
     return;
   }
 
   if (!isTelnyxWebhookPayload(rawData)) {
     console.warn('[webhook] Invalid Telnyx webhook payload');
-    sendText(res, 200, '');
+    sendError(res, 400, 'Invalid webhook payload');
     return;
   }
 
@@ -348,8 +348,12 @@ export function handleEnableSession(
   res: ServerResponse,
   sessionId: string
 ): void {
-  const success = sessionManager.enableSession(sessionId);
-  sendJSON(res, 200, { success });
+  if (!sessionManager.hasSession(sessionId)) {
+    sendError(res, 404, `Session ${sessionId} not found`);
+    return;
+  }
+  sessionManager.enableSession(sessionId);
+  sendJSON(res, 200, { success: true });
 }
 
 /**
@@ -360,8 +364,12 @@ export function handleDisableSession(
   res: ServerResponse,
   sessionId: string
 ): void {
-  const success = sessionManager.disableSession(sessionId);
-  sendJSON(res, 200, { success });
+  if (!sessionManager.hasSession(sessionId)) {
+    sendError(res, 404, `Session ${sessionId} not found`);
+    return;
+  }
+  sessionManager.disableSession(sessionId);
+  sendJSON(res, 200, { success: true });
 }
 
 /**

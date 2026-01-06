@@ -88,28 +88,28 @@ class SessionManager {
 
   /**
    * Enable SMS for a session
+   * @throws Error if session does not exist
    */
-  enableSession(sessionId: string): boolean {
+  enableSession(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      return false;
+      throw new Error(`Session ${sessionId} does not exist`);
     }
     session.enabled = true;
     session.lastActivity = Date.now();
-    return true;
   }
 
   /**
    * Disable SMS for a session
+   * @throws Error if session does not exist
    */
-  disableSession(sessionId: string): boolean {
+  disableSession(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      return false;
+      throw new Error(`Session ${sessionId} does not exist`);
     }
     session.enabled = false;
     session.lastActivity = Date.now();
-    return true;
   }
 
   /**

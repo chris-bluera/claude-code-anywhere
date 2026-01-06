@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
-import type { IncomingMessage } from 'http';
+import type { IncomingMessage, ServerResponse } from 'http';
 
 // We need to test the private readBody function, so we'll need to export it
 // For now, let's create a test module that imports routes and tests via the handlers
@@ -10,6 +10,37 @@ function createMockRequest(): IncomingMessage & EventEmitter {
   const req = new EventEmitter() as IncomingMessage & EventEmitter & { destroy: () => void };
   req.destroy = vi.fn();
   return req;
+}
+
+// Create a mock response that captures writes
+function createMockResponse(): ServerResponse & {
+  _statusCode: number;
+  _headers: Record<string, string>;
+  _body: string;
+} {
+  const res = {
+    _statusCode: 200,
+    _headers: {} as Record<string, string>,
+    _body: '',
+    writeHead(statusCode: number, headers?: Record<string, string>) {
+      this._statusCode = statusCode;
+      if (headers) {
+        Object.assign(this._headers, headers);
+      }
+      return this;
+    },
+    setHeader(name: string, value: string) {
+      this._headers[name] = value;
+      return this;
+    },
+    end(body?: string) {
+      if (body) {
+        this._body = body;
+      }
+      return this;
+    },
+  } as ServerResponse & { _statusCode: number; _headers: Record<string, string>; _body: string };
+  return res;
 }
 
 // Since readBody is not exported, we'll test it indirectly through handleTelnyxWebhook
@@ -72,5 +103,73 @@ describe('readBody', () => {
 
     const body = await bodyPromise;
     expect(body).toBe('hello world');
+  });
+});
+
+describe('handleTelnyxWebhook', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns 400 on invalid JSON', async () => {
+    const { handleTelnyxWebhook } = await import('../src/server/routes.js');
+    const { TelnyxClient } = await import('../src/server/telnyx.js');
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    const mockCtx = {
+      telnyxClient: new TelnyxClient({
+        apiKey: 'test',
+        fromNumber: '+1555000000',
+        userPhone: '+1555111111',
+      }),
+      tunnelUrl: null,
+      startTime: Date.now(),
+    };
+
+    const handlerPromise = handleTelnyxWebhook(req, res, mockCtx);
+
+    // Send invalid JSON
+    req.emit('data', Buffer.from('not valid json {{{'));
+    req.emit('end');
+
+    await handlerPromise;
+
+    // CLAUDE.md: fail early and fast - invalid input should return error status
+    expect(res._statusCode).toBe(400);
+  });
+
+  it('returns 400 on invalid webhook payload structure', async () => {
+    const { handleTelnyxWebhook } = await import('../src/server/routes.js');
+    const { TelnyxClient } = await import('../src/server/telnyx.js');
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    const mockCtx = {
+      telnyxClient: new TelnyxClient({
+        apiKey: 'test',
+        fromNumber: '+1555000000',
+        userPhone: '+1555111111',
+      }),
+      tunnelUrl: null,
+      startTime: Date.now(),
+    };
+
+    const handlerPromise = handleTelnyxWebhook(req, res, mockCtx);
+
+    // Send valid JSON but invalid payload structure
+    req.emit('data', Buffer.from(JSON.stringify({ foo: 'bar' })));
+    req.emit('end');
+
+    await handlerPromise;
+
+    // CLAUDE.md: fail early and fast - invalid payload should return error status
+    expect(res._statusCode).toBe(400);
   });
 });

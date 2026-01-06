@@ -96,12 +96,12 @@ export async function handleTelnyxWebhook(req, res, ctx) {
     }
     catch (error) {
         console.warn('[webhook] Invalid JSON in Telnyx webhook:', error);
-        sendText(res, 200, '');
+        sendError(res, 400, 'Invalid JSON');
         return;
     }
     if (!isTelnyxWebhookPayload(rawData)) {
         console.warn('[webhook] Invalid Telnyx webhook payload');
-        sendText(res, 200, '');
+        sendError(res, 400, 'Invalid webhook payload');
         return;
     }
     // Only process message.received events
@@ -276,15 +276,23 @@ export function handleGetResponse(_req, res, sessionId) {
  * Handle POST /api/session/:id/enable - Enable session
  */
 export function handleEnableSession(_req, res, sessionId) {
-    const success = sessionManager.enableSession(sessionId);
-    sendJSON(res, 200, { success });
+    if (!sessionManager.hasSession(sessionId)) {
+        sendError(res, 404, `Session ${sessionId} not found`);
+        return;
+    }
+    sessionManager.enableSession(sessionId);
+    sendJSON(res, 200, { success: true });
 }
 /**
  * Handle POST /api/session/:id/disable - Disable session
  */
 export function handleDisableSession(_req, res, sessionId) {
-    const success = sessionManager.disableSession(sessionId);
-    sendJSON(res, 200, { success });
+    if (!sessionManager.hasSession(sessionId)) {
+        sendError(res, 404, `Session ${sessionId} not found`);
+        return;
+    }
+    sessionManager.disableSession(sessionId);
+    sendJSON(res, 200, { success: true });
 }
 /**
  * Handle GET /api/session/:id/enabled - Check if session is enabled

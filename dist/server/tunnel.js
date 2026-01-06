@@ -246,17 +246,8 @@ export class CloudflaredTunnel {
             const timeout = setTimeout(() => {
                 if (!resolved) {
                     resolved = true;
-                    // For named tunnels, success even without URL detection
-                    if (tunnelUrl !== undefined) {
-                        this.tunnelUrl = tunnelUrl;
-                        if (this.onUrlCallback !== null) {
-                            this.onUrlCallback(tunnelUrl);
-                        }
-                        resolve({ success: true, data: tunnelUrl });
-                    }
-                    else {
-                        resolve({ success: false, error: 'Tunnel startup timeout and no URL configured' });
-                    }
+                    // CLAUDE.md: fail early and fast - timeout is always a failure
+                    resolve({ success: false, error: 'Tunnel startup timeout' });
                 }
             }, 15000);
             // For named tunnels, look for "Connection registered" or similar
