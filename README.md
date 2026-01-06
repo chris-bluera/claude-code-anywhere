@@ -85,7 +85,8 @@ When Claude Code needs your input—a question, approval, or notification—you 
 2. Click **Add New Profile**
 3. Name it (e.g., "claude-sms")
 4. Under **Inbound Settings**, you'll add the webhook URL later
-5. Click **Save**
+5. Leave all optional settings at defaults (number pool, MMS, spend limits — unchecked)
+6. Click **Save**
 
 ### 4. Assign Number to Profile
 
