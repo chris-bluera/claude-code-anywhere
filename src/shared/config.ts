@@ -5,7 +5,6 @@
 import type { AppConfig, TelnyxConfig, Result } from './types.js';
 
 const DEFAULT_PORT = 3847;
-const DEFAULT_BRIDGE_URL = 'http://localhost:3847';
 
 /**
  * Load Telnyx configuration from environment variables
@@ -71,7 +70,7 @@ export function loadAppConfig(): Result<AppConfig, string> {
     };
   }
 
-  const bridgeUrl = process.env['SMS_BRIDGE_URL'] ?? DEFAULT_BRIDGE_URL;
+  const bridgeUrl = process.env['SMS_BRIDGE_URL'] ?? `http://localhost:${String(port)}`;
 
   return {
     success: true,

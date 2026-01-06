@@ -2,7 +2,6 @@
  * Configuration loading from environment variables
  */
 const DEFAULT_PORT = 3847;
-const DEFAULT_BRIDGE_URL = 'http://localhost:3847';
 /**
  * Load Telnyx configuration from environment variables
  */
@@ -56,7 +55,7 @@ export function loadAppConfig() {
             error: `Invalid SMS_BRIDGE_PORT: ${portEnv ?? 'undefined'}`,
         };
     }
-    const bridgeUrl = process.env['SMS_BRIDGE_URL'] ?? DEFAULT_BRIDGE_URL;
+    const bridgeUrl = process.env['SMS_BRIDGE_URL'] ?? `http://localhost:${String(port)}`;
     return {
         success: true,
         data: {

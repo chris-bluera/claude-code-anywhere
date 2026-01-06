@@ -1,7 +1,75 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { getStateDir, getStateFilePath } from '../src/shared/config.js';
+import { getStateDir, getStateFilePath, loadAppConfig } from '../src/shared/config.js';
 
 describe('config', () => {
+  describe('loadAppConfig', () => {
+    let originalEnv: Record<string, string | undefined>;
+
+    beforeEach(() => {
+      originalEnv = {
+        TELNYX_API_KEY: process.env['TELNYX_API_KEY'],
+        TELNYX_FROM_NUMBER: process.env['TELNYX_FROM_NUMBER'],
+        SMS_USER_PHONE: process.env['SMS_USER_PHONE'],
+        SMS_BRIDGE_PORT: process.env['SMS_BRIDGE_PORT'],
+        SMS_BRIDGE_URL: process.env['SMS_BRIDGE_URL'],
+      };
+    });
+
+    afterEach(() => {
+      for (const [key, value] of Object.entries(originalEnv)) {
+        if (value !== undefined) {
+          process.env[key] = value;
+        } else {
+          delete process.env[key];
+        }
+      }
+    });
+
+    it('uses custom port in default bridge URL when SMS_BRIDGE_PORT is set', () => {
+      process.env['TELNYX_API_KEY'] = 'test-key';
+      process.env['TELNYX_FROM_NUMBER'] = '+1234567890';
+      process.env['SMS_USER_PHONE'] = '+0987654321';
+      process.env['SMS_BRIDGE_PORT'] = '4000';
+      delete process.env['SMS_BRIDGE_URL'];
+
+      const result = loadAppConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.port).toBe(4000);
+        expect(result.data.bridgeUrl).toBe('http://localhost:4000');
+      }
+    });
+
+    it('uses default port 3847 in bridge URL when SMS_BRIDGE_PORT is not set', () => {
+      process.env['TELNYX_API_KEY'] = 'test-key';
+      process.env['TELNYX_FROM_NUMBER'] = '+1234567890';
+      process.env['SMS_USER_PHONE'] = '+0987654321';
+      delete process.env['SMS_BRIDGE_PORT'];
+      delete process.env['SMS_BRIDGE_URL'];
+
+      const result = loadAppConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.port).toBe(3847);
+        expect(result.data.bridgeUrl).toBe('http://localhost:3847');
+      }
+    });
+
+    it('uses explicit SMS_BRIDGE_URL when provided', () => {
+      process.env['TELNYX_API_KEY'] = 'test-key';
+      process.env['TELNYX_FROM_NUMBER'] = '+1234567890';
+      process.env['SMS_USER_PHONE'] = '+0987654321';
+      process.env['SMS_BRIDGE_PORT'] = '4000';
+      process.env['SMS_BRIDGE_URL'] = 'https://my-tunnel.example.com';
+
+      const result = loadAppConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.bridgeUrl).toBe('https://my-tunnel.example.com');
+      }
+    });
+  });
+
   describe('getStateDir', () => {
     let originalHome: string | undefined;
     let originalUserProfile: string | undefined;
