@@ -1,11 +1,11 @@
 /**
  * Configuration loading from environment variables
  */
-import type { AppConfig, TwilioConfig, Result } from './types.js';
+import type { AppConfig, TelnyxConfig, Result } from './types.js';
 /**
- * Load Twilio configuration from environment variables
+ * Load Telnyx configuration from environment variables
  */
-export declare function loadTwilioConfig(): Result<TwilioConfig, string>;
+export declare function loadTelnyxConfig(): Result<TelnyxConfig, string>;
 /**
  * Load full application configuration
  */

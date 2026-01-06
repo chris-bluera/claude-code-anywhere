@@ -50,11 +50,10 @@ export interface ServerStatus {
     tunnelUrl: string | null;
 }
 /**
- * Twilio configuration
+ * Telnyx configuration
  */
-export interface TwilioConfig {
-    accountSid: string;
-    authToken: string;
+export interface TelnyxConfig {
+    apiKey: string;
     fromNumber: string;
     userPhone: string;
 }
@@ -62,7 +61,7 @@ export interface TwilioConfig {
  * Application configuration
  */
 export interface AppConfig {
-    twilio: TwilioConfig;
+    telnyx: TelnyxConfig;
     bridgeUrl: string;
     port: number;
 }
@@ -93,15 +92,23 @@ export interface RegisterSessionRequest {
     prompt: string;
 }
 /**
- * Twilio webhook payload (inbound SMS)
+ * Telnyx webhook payload (inbound SMS)
  */
-export interface TwilioWebhookPayload {
-    From: string;
-    To: string;
-    Body: string;
-    MessageSid: string;
-    AccountSid: string;
-    NumMedia?: string;
+export interface TelnyxWebhookPayload {
+    data: {
+        event_type: string;
+        id: string;
+        payload: {
+            from: {
+                phone_number: string;
+            };
+            to: Array<{
+                phone_number: string;
+            }>;
+            text: string;
+            id: string;
+        };
+    };
 }
 /**
  * Parsed SMS message with optional session ID

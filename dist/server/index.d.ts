@@ -6,7 +6,7 @@
  */
 export declare class BridgeServer {
     private server;
-    private twilioClient;
+    private telnyxClient;
     private tunnelUrl;
     private startTime;
     private readonly port;

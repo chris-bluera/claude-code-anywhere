@@ -4,11 +4,11 @@
 
 import { createServer } from 'http';
 import type { IncomingMessage, ServerResponse, Server } from 'http';
-import { loadTwilioConfig } from '../shared/config.js';
+import { loadTelnyxConfig } from '../shared/config.js';
 import { sessionManager } from './sessions.js';
-import { TwilioClient } from './twilio.js';
+import { TelnyxClient } from './telnyx.js';
 import {
-  handleTwilioWebhook,
+  handleTelnyxWebhook,
   handleSendSMS,
   handleRegisterSession,
   handleGetResponse,
@@ -29,7 +29,7 @@ const DEFAULT_PORT = 3847;
  */
 export class BridgeServer {
   private server: Server | null = null;
-  private twilioClient: TwilioClient | null = null;
+  private telnyxClient: TelnyxClient | null = null;
   private tunnelUrl: string | null = null;
   private startTime: number = 0;
   private readonly port: number;
@@ -56,13 +56,13 @@ export class BridgeServer {
    * Start the server
    */
   async start(): Promise<void> {
-    // Load Twilio config
-    const configResult = loadTwilioConfig();
+    // Load Telnyx config
+    const configResult = loadTelnyxConfig();
     if (!configResult.success) {
       throw new Error(configResult.error);
     }
 
-    this.twilioClient = new TwilioClient(configResult.data);
+    this.telnyxClient = new TelnyxClient(configResult.data);
     this.startTime = Date.now();
 
     // Start session cleanup
@@ -104,11 +104,11 @@ export class BridgeServer {
    * Get the route context for handlers
    */
   private getContext(): RouteContext {
-    if (this.twilioClient === null) {
+    if (this.telnyxClient === null) {
       throw new Error('Server not started');
     }
     return {
-      twilioClient: this.twilioClient,
+      telnyxClient: this.telnyxClient,
       tunnelUrl: this.tunnelUrl,
       startTime: this.startTime,
     };
@@ -136,9 +136,9 @@ export class BridgeServer {
     try {
       const ctx = this.getContext();
 
-      // POST /webhook/twilio
-      if (path === '/webhook/twilio' && method === 'POST') {
-        await handleTwilioWebhook(req, res, ctx);
+      // POST /webhook/telnyx
+      if (path === '/webhook/telnyx' && method === 'POST') {
+        await handleTelnyxWebhook(req, res, ctx);
         return;
       }
 
@@ -242,7 +242,7 @@ export class BridgeServer {
 ║  ${tunnelInfo.padEnd(58)}║
 ║                                                                ║
 ║  Endpoints:                                                    ║
-║  • POST /webhook/twilio  - Configure in Twilio console         ║
+║  • POST /webhook/telnyx  - Configure in Telnyx portal          ║
 ║  • POST /api/send        - Send SMS from hooks                 ║
 ║  • POST /api/session     - Register session for response       ║
 ║  • GET  /api/response/:id - Poll for SMS response              ║

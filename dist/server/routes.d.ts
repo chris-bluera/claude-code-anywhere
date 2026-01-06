@@ -2,19 +2,19 @@
  * HTTP API routes for the SMS bridge server
  */
 import type { IncomingMessage, ServerResponse } from 'http';
-import { TwilioClient } from './twilio.js';
+import { TelnyxClient } from './telnyx.js';
 /**
  * Route handler context
  */
 export interface RouteContext {
-    twilioClient: TwilioClient;
+    telnyxClient: TelnyxClient;
     tunnelUrl: string | null;
     startTime: number;
 }
 /**
- * Handle POST /webhook/twilio - Incoming SMS from Twilio
+ * Handle POST /webhook/telnyx - Incoming SMS from Telnyx
  */
-export declare function handleTwilioWebhook(req: IncomingMessage, res: ServerResponse, ctx: RouteContext): Promise<void>;
+export declare function handleTelnyxWebhook(req: IncomingMessage, res: ServerResponse, ctx: RouteContext): Promise<void>;
 /**
  * Handle POST /api/send - Send SMS for a hook event
  */

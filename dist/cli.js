@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { createBridgeServer } from './server/index.js';
 import { createTunnel } from './server/tunnel.js';
-import { loadTwilioConfig, loadAppConfig } from './shared/config.js';
+import { loadTelnyxConfig, loadAppConfig } from './shared/config.js';
 import { enableGlobal, disableGlobal, loadState } from './server/state.js';
 const program = new Command();
 /**
@@ -27,10 +27,16 @@ function isStatusResponse(value) {
     return true;
 }
 /**
- * Type guard for send SMS result
+ * Type guard for Telnyx send SMS result
  */
 function isSendResult(value) {
-    return typeof value === 'object' && value !== null && 'sid' in value && typeof value.sid === 'string';
+    return (typeof value === 'object' &&
+        value !== null &&
+        'data' in value &&
+        typeof value.data === 'object' &&
+        value.data !== null &&
+        'id' in value.data &&
+        typeof value.data.id === 'string');
 }
 program
     .name('claude-sms')
@@ -50,13 +56,12 @@ program
         process.exit(1);
     }
     // Validate config
-    const configResult = loadTwilioConfig();
+    const configResult = loadTelnyxConfig();
     if (!configResult.success) {
         console.error(`Error: ${configResult.error}`);
         console.error('\nPlease set the following environment variables:');
-        console.error('  TWILIO_ACCOUNT_SID=ACxxxxxxxxxx');
-        console.error('  TWILIO_AUTH_TOKEN=your-auth-token');
-        console.error('  TWILIO_FROM_NUMBER=+1234567890');
+        console.error('  TELNYX_API_KEY=your-api-key');
+        console.error('  TELNYX_FROM_NUMBER=+1234567890');
         console.error('  SMS_USER_PHONE=+1987654321');
         process.exit(1);
     }
@@ -66,7 +71,7 @@ program
         // Pass tunnel URL to server when available
         tunnel.onUrl((url) => {
             server.setTunnelUrl(url);
-            console.log(`\n🔗 Webhook URL for Twilio: ${url}/webhook/twilio\n`);
+            console.log(`\n🔗 Webhook URL for Telnyx: ${url}/webhook/telnyx\n`);
         });
         // Handle graceful shutdown
         const shutdown = () => {
@@ -165,39 +170,39 @@ program
     .command('test')
     .description('Send a test SMS message')
     .action(async () => {
-    const configResult = loadTwilioConfig();
+    const configResult = loadTelnyxConfig();
     if (!configResult.success) {
         console.error(`Error: ${configResult.error}`);
         process.exit(1);
     }
-    const { accountSid, authToken, fromNumber, userPhone } = configResult.data;
+    const { apiKey, fromNumber, userPhone } = configResult.data;
     console.log(`Sending test SMS to ${userPhone}...`);
     try {
-        const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+        const url = 'https://api.telnyx.com/v2/messages';
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
             },
-            body: new URLSearchParams({
-                To: userPhone,
-                From: fromNumber,
-                Body: '🧪 Test message from Claude SMS Bridge. Your setup is working!',
+            body: JSON.stringify({
+                from: fromNumber,
+                to: userPhone,
+                text: '🧪 Test message from Claude SMS Bridge. Your setup is working!',
             }),
         });
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`Error: Twilio API returned ${String(response.status)}`);
+            console.error(`Error: Telnyx API returned ${String(response.status)}`);
             console.error(errorText);
             process.exit(1);
         }
         const rawResult = await response.json();
         if (!isSendResult(rawResult)) {
-            console.error('Error: Invalid response from Twilio');
+            console.error('Error: Invalid response from Telnyx');
             process.exit(1);
         }
-        console.log(`✓ Test SMS sent successfully (SID: ${rawResult.sid})`);
+        console.log(`✓ Test SMS sent successfully (ID: ${rawResult.data.id})`);
     }
     catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -226,15 +231,15 @@ program
     console.log(`  UserPromptSubmit: ${state.hooks.UserPromptSubmit ? 'On' : 'Off'}`);
     console.log('');
     if (configResult.success) {
-        console.log('Twilio Configuration:');
-        console.log(`  Account SID: ${configResult.data.twilio.accountSid.substring(0, 8)}...`);
-        console.log(`  From Number: ${configResult.data.twilio.fromNumber}`);
-        console.log(`  User Phone: ${configResult.data.twilio.userPhone}`);
+        console.log('Telnyx Configuration:');
+        console.log(`  API Key: ${configResult.data.telnyx.apiKey.substring(0, 12)}...`);
+        console.log(`  From Number: ${configResult.data.telnyx.fromNumber}`);
+        console.log(`  User Phone: ${configResult.data.telnyx.userPhone}`);
         console.log(`  Bridge URL: ${configResult.data.bridgeUrl}`);
         console.log(`  Port: ${String(configResult.data.port)}`);
     }
     else {
-        console.log('Twilio Configuration:');
+        console.log('Telnyx Configuration:');
         console.log(`  Error: ${configResult.error}`);
     }
 });

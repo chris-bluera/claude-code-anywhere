@@ -1,7 +1,7 @@
 {
   "name": "claude-sms",
   "version": "0.1.0",
-  "description": "SMS notifications and bidirectional communication for Claude Code via Twilio",
+  "description": "SMS notifications and bidirectional communication for Claude Code via Telnyx",
   "type": "module",
   "bin": {
     "claude-sms": "./dist/cli.js"
@@ -46,7 +46,7 @@
     "claude",
     "claude-code",
     "sms",
-    "twilio",
+    "telnyx",
     "notifications"
   ],
   "author": "chris-bluera",
@@ -63,8 +63,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "commander": "^12.1.0",
-    "twilio": "^5.4.3"
+    "commander": "^12.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

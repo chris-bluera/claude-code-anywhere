@@ -3,24 +3,12 @@
  */
 import { sessionManager } from './sessions.js';
 import { stateManager } from './state.js';
-import { generateTwiML } from './twilio.js';
 const VALID_HOOK_EVENTS = new Set(['Notification', 'Stop', 'PreToolUse', 'UserPromptSubmit']);
 /**
  * Type guard for HookEvent
  */
 function isHookEvent(value) {
     return typeof value === 'string' && VALID_HOOK_EVENTS.has(value);
-}
-/**
- * Parse URL-encoded body (for Twilio webhooks)
- */
-function parseUrlEncoded(body) {
-    const params = new URLSearchParams(body);
-    const result = {};
-    for (const [key, value] of params) {
-        result[key] = value;
-    }
-    return result;
 }
 /**
  * Parse JSON body
@@ -55,11 +43,11 @@ function sendJSON(res, statusCode, data) {
     res.end(JSON.stringify(data));
 }
 /**
- * Send TwiML response
+ * Send plain text response (for Telnyx webhook acknowledgment)
  */
-function sendTwiML(res, message) {
-    res.writeHead(200, { 'Content-Type': 'text/xml' });
-    res.end(generateTwiML(message));
+function sendText(res, statusCode, message) {
+    res.writeHead(statusCode, { 'Content-Type': 'text/plain' });
+    res.end(message);
 }
 /**
  * Send error response
@@ -68,18 +56,50 @@ function sendError(res, statusCode, error) {
     sendJSON(res, statusCode, { error });
 }
 /**
- * Handle POST /webhook/twilio - Incoming SMS from Twilio
+ * Type guard for Telnyx webhook payload
  */
-export async function handleTwilioWebhook(req, res, ctx) {
+function isTelnyxWebhookPayload(value) {
+    if (typeof value !== 'object' || value === null)
+        return false;
+    if (!('data' in value) || typeof value.data !== 'object' || value.data === null)
+        return false;
+    const data = value.data;
+    if (!('event_type' in data) || typeof data.event_type !== 'string')
+        return false;
+    if (!('payload' in data) || typeof data.payload !== 'object' || data.payload === null)
+        return false;
+    const payload = data.payload;
+    if (!('from' in payload) || typeof payload.from !== 'object' || payload.from === null)
+        return false;
+    if (!('phone_number' in payload.from) || typeof payload.from.phone_number !== 'string')
+        return false;
+    if (!('text' in payload) || typeof payload.text !== 'string')
+        return false;
+    return true;
+}
+/**
+ * Handle POST /webhook/telnyx - Incoming SMS from Telnyx
+ */
+export async function handleTelnyxWebhook(req, res, ctx) {
     const body = await readBody(req);
-    const rawData = parseUrlEncoded(body);
-    const from = rawData['From'] ?? '';
-    const messageBody = rawData['Body'] ?? '';
+    const rawData = parseJSON(body);
+    if (!isTelnyxWebhookPayload(rawData)) {
+        console.warn('[webhook] Invalid Telnyx webhook payload');
+        sendText(res, 200, '');
+        return;
+    }
+    // Only process message.received events
+    if (rawData.data.event_type !== 'message.received') {
+        sendText(res, 200, '');
+        return;
+    }
+    const from = rawData.data.payload.from.phone_number;
+    const messageBody = rawData.data.payload.text;
     console.log(`[webhook] SMS received from ${from}: ${messageBody}`);
     // Verify sender (optional but recommended)
-    if (!ctx.twilioClient.verifyFromNumber(from)) {
+    if (!ctx.telnyxClient.verifyFromNumber(from)) {
         console.warn(`[webhook] Unauthorized sender: ${from}`);
-        sendTwiML(res);
+        sendText(res, 200, '');
         return;
     }
     // Parse session ID from message
@@ -88,29 +108,32 @@ export async function handleTwilioWebhook(req, res, ctx) {
         // Can't determine which session
         const activeIds = sessionManager.getActiveSessionIds();
         if (activeIds.length === 0) {
-            sendTwiML(res, 'No active Claude Code sessions.');
+            await ctx.telnyxClient.sendSMS('No active Claude Code sessions.');
         }
         else {
             const idList = activeIds.map((id) => `CC-${id}`).join(', ');
-            sendTwiML(res, `Multiple sessions active. Reply with [CC-ID] prefix. Active: ${idList}`);
+            await ctx.telnyxClient.sendSMS(`Multiple sessions active. Reply with [CC-ID] prefix. Active: ${idList}`);
         }
+        sendText(res, 200, '');
         return;
     }
     if (!sessionManager.hasSession(sessionId)) {
         const activeIds = sessionManager.getActiveSessionIds();
         if (activeIds.length === 0) {
-            sendTwiML(res, `Session CC-${sessionId} expired. No active sessions.`);
+            await ctx.telnyxClient.sendSMS(`Session CC-${sessionId} expired. No active sessions.`);
         }
         else {
             const idList = activeIds.map((id) => `CC-${id}`).join(', ');
-            sendTwiML(res, `❌ Session CC-${sessionId} expired or not found. Active: ${idList}`);
+            await ctx.telnyxClient.sendSMS(`❌ Session CC-${sessionId} expired or not found. Active: ${idList}`);
         }
+        sendText(res, 200, '');
         return;
     }
     // Store the response
     sessionManager.storeResponse(sessionId, response, from);
     console.log(`[webhook] Response stored for session ${sessionId}`);
-    sendTwiML(res, `✓ Response received for CC-${sessionId}`);
+    await ctx.telnyxClient.sendSMS(`✓ Response received for CC-${sessionId}`);
+    sendText(res, 200, '');
 }
 /**
  * Handle POST /api/send - Send SMS for a hook event
@@ -149,9 +172,9 @@ export async function handleSendSMS(req, res, ctx) {
         return;
     }
     // Send the SMS
-    const result = await ctx.twilioClient.sendHookMessage(sessionId, event, message);
+    const result = await ctx.telnyxClient.sendHookMessage(sessionId, event, message);
     if (result.success) {
-        sendJSON(res, 200, { sent: true, messageSid: result.data });
+        sendJSON(res, 200, { sent: true, messageId: result.data });
     }
     else {
         sendError(res, 500, result.error);
@@ -192,9 +215,9 @@ export async function handleRegisterSession(req, res, ctx) {
     // Register the session
     sessionManager.registerSession(sessionId, event, prompt);
     // Send the SMS
-    const result = await ctx.twilioClient.sendHookMessage(sessionId, event, prompt);
+    const result = await ctx.telnyxClient.sendHookMessage(sessionId, event, prompt);
     if (result.success) {
-        sendJSON(res, 200, { registered: true, messageSid: result.data });
+        sendJSON(res, 200, { registered: true, messageId: result.data });
     }
     else {
         sendError(res, 500, result.error);
@@ -270,7 +293,7 @@ export function handleRoot(_req, res) {
         name: 'Claude Code SMS Bridge',
         version: '0.1.0',
         endpoints: [
-            'POST /webhook/twilio - Twilio webhook for incoming SMS',
+            'POST /webhook/telnyx - Telnyx webhook for incoming SMS',
             'POST /api/send - Send SMS for hook event',
             'POST /api/session - Register session waiting for response',
             'GET /api/response/:sessionId - Poll for SMS response',

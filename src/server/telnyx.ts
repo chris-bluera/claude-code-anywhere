@@ -1,8 +1,8 @@
 /**
- * Twilio API client for sending SMS
+ * Telnyx API client for sending SMS
  */
 
-import type { TwilioConfig, Result, HookEvent } from '../shared/types.js';
+import type { TelnyxConfig, Result, HookEvent } from '../shared/types.js';
 
 const MAX_SMS_LENGTH = 1500;
 
@@ -63,12 +63,12 @@ function getEventHeader(event: HookEvent): string {
 }
 
 /**
- * Twilio client for sending and receiving SMS
+ * Telnyx client for sending and receiving SMS
  */
-export class TwilioClient {
-  private readonly config: TwilioConfig;
+export class TelnyxClient {
+  private readonly config: TelnyxConfig;
 
-  constructor(config: TwilioConfig) {
+  constructor(config: TelnyxConfig) {
     this.config = config;
   }
 
@@ -76,21 +76,21 @@ export class TwilioClient {
    * Send an SMS message
    */
   async sendSMS(message: string): Promise<Result<string, string>> {
-    const { accountSid, authToken, fromNumber, userPhone } = this.config;
+    const { apiKey, fromNumber, userPhone } = this.config;
 
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+    const url = 'https://api.telnyx.com/v2/messages';
 
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({
-          To: userPhone,
-          From: fromNumber,
-          Body: message,
+        body: JSON.stringify({
+          from: fromNumber,
+          to: userPhone,
+          text: message,
         }),
       });
 
@@ -98,18 +98,24 @@ export class TwilioClient {
         const errorText = await response.text();
         return {
           success: false,
-          error: `Twilio API error: ${String(response.status)} - ${errorText}`,
+          error: `Telnyx API error: ${String(response.status)} - ${errorText}`,
         };
       }
 
       const rawData: unknown = await response.json();
-      const sid =
-        typeof rawData === 'object' && rawData !== null && 'sid' in rawData && typeof rawData.sid === 'string'
-          ? rawData.sid
+      const messageId =
+        typeof rawData === 'object' &&
+        rawData !== null &&
+        'data' in rawData &&
+        typeof rawData.data === 'object' &&
+        rawData.data !== null &&
+        'id' in rawData.data &&
+        typeof rawData.data.id === 'string'
+          ? rawData.data.id
           : 'unknown';
       return {
         success: true,
-        data: sid,
+        data: messageId,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -147,19 +153,6 @@ export class TwilioClient {
   }
 
   /**
-   * Validate Twilio webhook signature (optional security)
-   */
-  validateWebhookSignature(
-    _signature: string,
-    _url: string,
-    _params: Record<string, string>
-  ): boolean {
-    // TODO: Implement Twilio signature validation
-    // For now, we rely on phone number verification
-    return true;
-  }
-
-  /**
    * Verify the from phone number matches configured user
    */
   verifyFromNumber(from: string): boolean {
@@ -167,26 +160,4 @@ export class TwilioClient {
     const normalize = (num: string): string => num.replace(/\D/g, '');
     return normalize(from) === normalize(this.config.userPhone);
   }
-}
-
-/**
- * Generate TwiML response for Twilio webhook
- */
-export function generateTwiML(message?: string): string {
-  if (message !== undefined && message !== '') {
-    return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapeXml(message)}</Message></Response>`;
-  }
-  return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
-}
-
-/**
- * Escape XML special characters
- */
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }

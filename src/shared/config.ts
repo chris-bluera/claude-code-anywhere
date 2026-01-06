@@ -2,40 +2,34 @@
  * Configuration loading from environment variables
  */
 
-import type { AppConfig, TwilioConfig, Result } from './types.js';
+import type { AppConfig, TelnyxConfig, Result } from './types.js';
 
 const DEFAULT_PORT = 3847;
 const DEFAULT_BRIDGE_URL = 'http://localhost:3847';
 
 /**
- * Load Twilio configuration from environment variables
+ * Load Telnyx configuration from environment variables
  */
-export function loadTwilioConfig(): Result<TwilioConfig, string> {
-  const accountSid = process.env['TWILIO_ACCOUNT_SID'];
-  const authToken = process.env['TWILIO_AUTH_TOKEN'];
-  const fromNumber = process.env['TWILIO_FROM_NUMBER'];
+export function loadTelnyxConfig(): Result<TelnyxConfig, string> {
+  const apiKey = process.env['TELNYX_API_KEY'];
+  const fromNumber = process.env['TELNYX_FROM_NUMBER'];
   const userPhone = process.env['SMS_USER_PHONE'];
 
   const missing: string[] = [];
 
-  if (accountSid === undefined || accountSid === '') {
-    missing.push('TWILIO_ACCOUNT_SID');
-  }
-  if (authToken === undefined || authToken === '') {
-    missing.push('TWILIO_AUTH_TOKEN');
+  if (apiKey === undefined || apiKey === '') {
+    missing.push('TELNYX_API_KEY');
   }
   if (fromNumber === undefined || fromNumber === '') {
-    missing.push('TWILIO_FROM_NUMBER');
+    missing.push('TELNYX_FROM_NUMBER');
   }
   if (userPhone === undefined || userPhone === '') {
     missing.push('SMS_USER_PHONE');
   }
 
   if (
-    accountSid === undefined ||
-    accountSid === '' ||
-    authToken === undefined ||
-    authToken === '' ||
+    apiKey === undefined ||
+    apiKey === '' ||
     fromNumber === undefined ||
     fromNumber === '' ||
     userPhone === undefined ||
@@ -50,8 +44,7 @@ export function loadTwilioConfig(): Result<TwilioConfig, string> {
   return {
     success: true,
     data: {
-      accountSid,
-      authToken,
+      apiKey,
       fromNumber,
       userPhone,
     },
@@ -62,10 +55,10 @@ export function loadTwilioConfig(): Result<TwilioConfig, string> {
  * Load full application configuration
  */
 export function loadAppConfig(): Result<AppConfig, string> {
-  const twilioResult = loadTwilioConfig();
+  const telnyxResult = loadTelnyxConfig();
 
-  if (!twilioResult.success) {
-    return twilioResult;
+  if (!telnyxResult.success) {
+    return telnyxResult;
   }
 
   const portEnv = process.env['SMS_BRIDGE_PORT'];
@@ -83,7 +76,7 @@ export function loadAppConfig(): Result<AppConfig, string> {
   return {
     success: true,
     data: {
-      twilio: twilioResult.data,
+      telnyx: telnyxResult.data,
       bridgeUrl,
       port,
     },

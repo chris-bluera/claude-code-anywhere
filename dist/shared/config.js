@@ -4,30 +4,24 @@
 const DEFAULT_PORT = 3847;
 const DEFAULT_BRIDGE_URL = 'http://localhost:3847';
 /**
- * Load Twilio configuration from environment variables
+ * Load Telnyx configuration from environment variables
  */
-export function loadTwilioConfig() {
-    const accountSid = process.env['TWILIO_ACCOUNT_SID'];
-    const authToken = process.env['TWILIO_AUTH_TOKEN'];
-    const fromNumber = process.env['TWILIO_FROM_NUMBER'];
+export function loadTelnyxConfig() {
+    const apiKey = process.env['TELNYX_API_KEY'];
+    const fromNumber = process.env['TELNYX_FROM_NUMBER'];
     const userPhone = process.env['SMS_USER_PHONE'];
     const missing = [];
-    if (accountSid === undefined || accountSid === '') {
-        missing.push('TWILIO_ACCOUNT_SID');
-    }
-    if (authToken === undefined || authToken === '') {
-        missing.push('TWILIO_AUTH_TOKEN');
+    if (apiKey === undefined || apiKey === '') {
+        missing.push('TELNYX_API_KEY');
     }
     if (fromNumber === undefined || fromNumber === '') {
-        missing.push('TWILIO_FROM_NUMBER');
+        missing.push('TELNYX_FROM_NUMBER');
     }
     if (userPhone === undefined || userPhone === '') {
         missing.push('SMS_USER_PHONE');
     }
-    if (accountSid === undefined ||
-        accountSid === '' ||
-        authToken === undefined ||
-        authToken === '' ||
+    if (apiKey === undefined ||
+        apiKey === '' ||
         fromNumber === undefined ||
         fromNumber === '' ||
         userPhone === undefined ||
@@ -40,8 +34,7 @@ export function loadTwilioConfig() {
     return {
         success: true,
         data: {
-            accountSid,
-            authToken,
+            apiKey,
             fromNumber,
             userPhone,
         },
@@ -51,9 +44,9 @@ export function loadTwilioConfig() {
  * Load full application configuration
  */
 export function loadAppConfig() {
-    const twilioResult = loadTwilioConfig();
-    if (!twilioResult.success) {
-        return twilioResult;
+    const telnyxResult = loadTelnyxConfig();
+    if (!telnyxResult.success) {
+        return telnyxResult;
     }
     const portEnv = process.env['SMS_BRIDGE_PORT'];
     const port = portEnv !== undefined && portEnv !== '' ? parseInt(portEnv, 10) : DEFAULT_PORT;
@@ -67,7 +60,7 @@ export function loadAppConfig() {
     return {
         success: true,
         data: {
-            twilio: twilioResult.data,
+            telnyx: telnyxResult.data,
             bridgeUrl,
             port,
         },
