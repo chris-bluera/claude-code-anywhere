@@ -85,9 +85,15 @@ export function loadAppConfig(): Result<AppConfig, string> {
 
 /**
  * Get the state directory path
+ * @throws Error if neither HOME nor USERPROFILE environment variable is set
  */
 export function getStateDir(): string {
-  const home = process.env['HOME'] ?? process.env['USERPROFILE'] ?? '.';
+  const home = process.env['HOME'] ?? process.env['USERPROFILE'];
+  if (home === undefined) {
+    throw new Error(
+      'Cannot determine home directory: neither HOME nor USERPROFILE environment variable is set'
+    );
+  }
   return `${home}/.claude/claude-sms`;
 }
 

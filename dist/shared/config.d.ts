@@ -12,6 +12,7 @@ export declare function loadTelnyxConfig(): Result<TelnyxConfig, string>;
 export declare function loadAppConfig(): Result<AppConfig, string>;
 /**
  * Get the state directory path
+ * @throws Error if neither HOME nor USERPROFILE environment variable is set
  */
 export declare function getStateDir(): string;
 /**
