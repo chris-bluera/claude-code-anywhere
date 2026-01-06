@@ -95,10 +95,14 @@ class SessionManager {
     }
     /**
      * Check if a session is enabled
+     * @throws Error if session does not exist
      */
     isSessionEnabled(sessionId) {
         const session = this.sessions.get(sessionId);
-        return session?.enabled ?? true; // Default to enabled if session doesn't exist yet
+        if (session === undefined) {
+            throw new Error(`Session ${sessionId} does not exist`);
+        }
+        return session.enabled;
     }
     /**
      * Store a response for a session

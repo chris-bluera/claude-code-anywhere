@@ -37,39 +37,37 @@ export function loadState() {
 }
 /**
  * Save global state to file
+ * @throws Error if state cannot be saved
  */
 export function saveState(state) {
     const statePath = getStateFilePath();
     const stateDir = getStateDir();
-    try {
-        // Ensure directory exists
-        if (!existsSync(stateDir)) {
-            mkdirSync(stateDir, { recursive: true });
-        }
-        const content = JSON.stringify(state, null, 2);
-        writeFileSync(statePath, content, 'utf-8');
-        return true;
+    // Ensure directory exists
+    if (!existsSync(stateDir)) {
+        mkdirSync(stateDir, { recursive: true });
     }
-    catch (error) {
-        console.error('[state] Failed to save state file:', error);
-        return false;
-    }
+    const content = JSON.stringify(state, null, 2);
+    writeFileSync(statePath, content, 'utf-8');
 }
 /**
  * Enable global SMS notifications
+ * @throws Error if state cannot be saved
  */
 export function enableGlobal() {
     const state = loadState();
     state.enabled = true;
-    return saveState(state);
+    saveState(state);
+    return true;
 }
 /**
  * Disable global SMS notifications
+ * @throws Error if state cannot be saved
  */
 export function disableGlobal() {
     const state = loadState();
     state.enabled = false;
-    return saveState(state);
+    saveState(state);
+    return true;
 }
 /**
  * Check if global SMS is enabled
@@ -79,19 +77,23 @@ export function isGlobalEnabled() {
 }
 /**
  * Enable a specific hook
+ * @throws Error if state cannot be saved
  */
 export function enableHook(hook) {
     const state = loadState();
     state.hooks[hook] = true;
-    return saveState(state);
+    saveState(state);
+    return true;
 }
 /**
  * Disable a specific hook
+ * @throws Error if state cannot be saved
  */
 export function disableHook(hook) {
     const state = loadState();
     state.hooks[hook] = false;
-    return saveState(state);
+    saveState(state);
+    return true;
 }
 /**
  * Check if a specific hook is enabled
@@ -144,17 +146,21 @@ export class StateManager {
     }
     /**
      * Enable globally
+     * @throws Error if state cannot be saved
      */
     enable() {
         this.state.enabled = true;
-        return saveState(this.state);
+        saveState(this.state);
+        return true;
     }
     /**
      * Disable globally
+     * @throws Error if state cannot be saved
      */
     disable() {
         this.state.enabled = false;
-        return saveState(this.state);
+        saveState(this.state);
+        return true;
     }
     /**
      * Check if a hook is enabled (reads fresh state from disk)

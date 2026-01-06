@@ -47,6 +47,7 @@ declare class SessionManager {
     disableSession(sessionId: string): boolean;
     /**
      * Check if a session is enabled
+     * @throws Error if session does not exist
      */
     isSessionEnabled(sessionId: string): boolean;
     /**

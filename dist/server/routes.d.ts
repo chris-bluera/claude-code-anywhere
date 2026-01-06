@@ -14,6 +14,11 @@ export interface RouteContext {
 /** Maximum request body size (1MB) */
 export declare const MAX_BODY_SIZE: number;
 /**
+ * Parse JSON body
+ * @throws SyntaxError if body is not valid JSON
+ */
+export declare function parseJSON(body: string): unknown;
+/**
  * Read request body with error handling and size limit
  */
 export declare function readBody(req: IncomingMessage): Promise<string>;

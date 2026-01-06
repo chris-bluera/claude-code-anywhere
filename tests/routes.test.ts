@@ -16,6 +16,20 @@ function createMockRequest(): IncomingMessage & EventEmitter {
 // But first, let's create a direct test by temporarily making readBody accessible
 
 // For TDD, we'll write the test assuming readBody will be exported
+describe('parseJSON', () => {
+  it('throws SyntaxError on invalid JSON', async () => {
+    // parseJSON should throw instead of returning null
+    const { parseJSON } = await import('../src/server/routes.js');
+    expect(() => parseJSON('not valid json {{{')).toThrow(SyntaxError);
+  });
+
+  it('returns parsed object on valid JSON', async () => {
+    const { parseJSON } = await import('../src/server/routes.js');
+    const result = parseJSON('{"foo": "bar"}');
+    expect(result).toEqual({ foo: 'bar' });
+  });
+});
+
 describe('readBody', () => {
   it('rejects when request emits error', async () => {
     // Import dynamically to get the function after it's exported

@@ -8,14 +8,17 @@ import type { GlobalState, HookEvent } from '../shared/types.js';
 export declare function loadState(): GlobalState;
 /**
  * Save global state to file
+ * @throws Error if state cannot be saved
  */
-export declare function saveState(state: GlobalState): boolean;
+export declare function saveState(state: GlobalState): void;
 /**
  * Enable global SMS notifications
+ * @throws Error if state cannot be saved
  */
 export declare function enableGlobal(): boolean;
 /**
  * Disable global SMS notifications
+ * @throws Error if state cannot be saved
  */
 export declare function disableGlobal(): boolean;
 /**
@@ -24,10 +27,12 @@ export declare function disableGlobal(): boolean;
 export declare function isGlobalEnabled(): boolean;
 /**
  * Enable a specific hook
+ * @throws Error if state cannot be saved
  */
 export declare function enableHook(hook: HookEvent): boolean;
 /**
  * Disable a specific hook
+ * @throws Error if state cannot be saved
  */
 export declare function disableHook(hook: HookEvent): boolean;
 /**
@@ -54,10 +59,12 @@ export declare class StateManager {
     isEnabled(): boolean;
     /**
      * Enable globally
+     * @throws Error if state cannot be saved
      */
     enable(): boolean;
     /**
      * Disable globally
+     * @throws Error if state cannot be saved
      */
     disable(): boolean;
     /**

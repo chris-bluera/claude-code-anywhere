@@ -13,7 +13,7 @@ vi.mock('../src/shared/config.js', () => ({
 }));
 
 // Import after mocking
-const { loadState, StateManager } = await import('../src/server/state.js');
+const { loadState, saveState, StateManager } = await import('../src/server/state.js');
 
 describe('loadState', () => {
   beforeEach(() => {
@@ -48,6 +48,39 @@ describe('loadState', () => {
   it('throws when file has wrong types', () => {
     writeFileSync(testStateFile, JSON.stringify({ enabled: 'yes', hooks: {} }));
     expect(() => loadState()).toThrow();
+  });
+});
+
+describe('saveState', () => {
+  beforeEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true });
+    }
+  });
+
+  it('throws when directory is not writable', () => {
+    // Make directory read-only to cause write failure
+    const fs = require('fs');
+    fs.chmodSync(testDir, 0o444);
+
+    const state = {
+      enabled: true,
+      hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+    };
+
+    try {
+      expect(() => saveState(state)).toThrow();
+    } finally {
+      // Restore permissions for cleanup
+      fs.chmodSync(testDir, 0o755);
+    }
   });
 });
 

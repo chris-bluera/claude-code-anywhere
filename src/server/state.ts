@@ -46,42 +46,41 @@ export function loadState(): GlobalState {
 
 /**
  * Save global state to file
+ * @throws Error if state cannot be saved
  */
-export function saveState(state: GlobalState): boolean {
+export function saveState(state: GlobalState): void {
   const statePath = getStateFilePath();
   const stateDir = getStateDir();
 
-  try {
-    // Ensure directory exists
-    if (!existsSync(stateDir)) {
-      mkdirSync(stateDir, { recursive: true });
-    }
-
-    const content = JSON.stringify(state, null, 2);
-    writeFileSync(statePath, content, 'utf-8');
-    return true;
-  } catch (error) {
-    console.error('[state] Failed to save state file:', error);
-    return false;
+  // Ensure directory exists
+  if (!existsSync(stateDir)) {
+    mkdirSync(stateDir, { recursive: true });
   }
+
+  const content = JSON.stringify(state, null, 2);
+  writeFileSync(statePath, content, 'utf-8');
 }
 
 /**
  * Enable global SMS notifications
+ * @throws Error if state cannot be saved
  */
 export function enableGlobal(): boolean {
   const state = loadState();
   state.enabled = true;
-  return saveState(state);
+  saveState(state);
+  return true;
 }
 
 /**
  * Disable global SMS notifications
+ * @throws Error if state cannot be saved
  */
 export function disableGlobal(): boolean {
   const state = loadState();
   state.enabled = false;
-  return saveState(state);
+  saveState(state);
+  return true;
 }
 
 /**
@@ -93,20 +92,24 @@ export function isGlobalEnabled(): boolean {
 
 /**
  * Enable a specific hook
+ * @throws Error if state cannot be saved
  */
 export function enableHook(hook: HookEvent): boolean {
   const state = loadState();
   state.hooks[hook] = true;
-  return saveState(state);
+  saveState(state);
+  return true;
 }
 
 /**
  * Disable a specific hook
+ * @throws Error if state cannot be saved
  */
 export function disableHook(hook: HookEvent): boolean {
   const state = loadState();
   state.hooks[hook] = false;
-  return saveState(state);
+  saveState(state);
+  return true;
 }
 
 /**
@@ -170,18 +173,22 @@ export class StateManager {
 
   /**
    * Enable globally
+   * @throws Error if state cannot be saved
    */
   enable(): boolean {
     this.state.enabled = true;
-    return saveState(this.state);
+    saveState(this.state);
+    return true;
   }
 
   /**
    * Disable globally
+   * @throws Error if state cannot be saved
    */
   disable(): boolean {
     this.state.enabled = false;
-    return saveState(this.state);
+    saveState(this.state);
+    return true;
   }
 
   /**

@@ -31,13 +31,10 @@ export const MAX_BODY_SIZE = 1024 * 1024;
 
 /**
  * Parse JSON body
+ * @throws SyntaxError if body is not valid JSON
  */
-function parseJSON(body: string): unknown {
-  try {
-    return JSON.parse(body);
-  } catch {
-    return null;
-  }
+export function parseJSON(body: string): unknown {
+  return JSON.parse(body);
 }
 
 /**
@@ -116,7 +113,15 @@ export async function handleTelnyxWebhook(
   ctx: RouteContext
 ): Promise<void> {
   const body = await readBody(req);
-  const rawData = parseJSON(body);
+
+  let rawData: unknown;
+  try {
+    rawData = parseJSON(body);
+  } catch (error) {
+    console.warn('[webhook] Invalid JSON in Telnyx webhook:', error);
+    sendText(res, 200, '');
+    return;
+  }
 
   if (!isTelnyxWebhookPayload(rawData)) {
     console.warn('[webhook] Invalid Telnyx webhook payload');
@@ -187,10 +192,18 @@ export async function handleSendSMS(
   ctx: RouteContext
 ): Promise<void> {
   const body = await readBody(req);
-  const rawData = parseJSON(body);
 
-  if (rawData === null || typeof rawData !== 'object') {
-    sendError(res, 400, 'Invalid JSON body');
+  let rawData: unknown;
+  try {
+    rawData = parseJSON(body);
+  } catch (error) {
+    const message = error instanceof SyntaxError ? error.message : 'Invalid JSON';
+    sendError(res, 400, `Invalid JSON body: ${message}`);
+    return;
+  }
+
+  if (typeof rawData !== 'object' || rawData === null) {
+    sendError(res, 400, 'Invalid JSON body: expected object');
     return;
   }
 
@@ -223,6 +236,11 @@ export async function handleSendSMS(
     return;
   }
 
+  if (!sessionManager.hasSession(sessionId)) {
+    sendJSON(res, 200, { sent: false, reason: 'Session not found' });
+    return;
+  }
+
   if (!sessionManager.isSessionEnabled(sessionId)) {
     sendJSON(res, 200, { sent: false, reason: 'Session disabled' });
     return;
@@ -247,10 +265,18 @@ export async function handleRegisterSession(
   ctx: RouteContext
 ): Promise<void> {
   const body = await readBody(req);
-  const rawData = parseJSON(body);
 
-  if (rawData === null || typeof rawData !== 'object') {
-    sendError(res, 400, 'Invalid JSON body');
+  let rawData: unknown;
+  try {
+    rawData = parseJSON(body);
+  } catch (error) {
+    const message = error instanceof SyntaxError ? error.message : 'Invalid JSON';
+    sendError(res, 400, `Invalid JSON body: ${message}`);
+    return;
+  }
+
+  if (typeof rawData !== 'object' || rawData === null) {
+    sendError(res, 400, 'Invalid JSON body: expected object');
     return;
   }
 
@@ -346,6 +372,10 @@ export function handleCheckSessionEnabled(
   res: ServerResponse,
   sessionId: string
 ): void {
+  if (!sessionManager.hasSession(sessionId)) {
+    sendError(res, 404, 'Session not found');
+    return;
+  }
   const enabled = sessionManager.isSessionEnabled(sessionId);
   const globalEnabled = stateManager.isEnabled();
   sendJSON(res, 200, { enabled: enabled && globalEnabled });
