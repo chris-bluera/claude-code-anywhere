@@ -315,21 +315,42 @@ By default, the server creates a random tunnel URL each time it starts (e.g., `h
 
 For a persistent URL that never changes:
 
-1. **Create a Cloudflare tunnel** (one-time):
+**Prerequisites:** A domain managed by Cloudflare (free tier works). You can use an existing domain—the tunnel uses a subdomain and won't affect your main site.
+
+1. **Install cloudflared:**
    ```bash
-   # Install cloudflared if not already installed
-   # Then authenticate and create tunnel
+   # macOS
+   brew install cloudflared
+
+   # Linux
+   curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+   chmod +x cloudflared && sudo mv cloudflared /usr/local/bin/
+   ```
+
+2. **Authenticate** (opens browser—select any domain you own):
+   ```bash
    cloudflared tunnel login
+   ```
+
+3. **Create tunnel:**
+   ```bash
    cloudflared tunnel create claude-sms
    ```
 
-2. **Configure DNS** in Cloudflare dashboard:
-   - Add a CNAME record pointing to your tunnel
-
-3. **Set environment variables**:
+4. **Route DNS** (automatically creates the subdomain):
    ```bash
-   export CLOUDFLARE_TUNNEL_ID=claude-sms
-   export CLOUDFLARE_TUNNEL_URL=https://claude-sms.yourdomain.com
+   cloudflared tunnel route dns claude-sms claude-sms.yourdomain.com
+   ```
+
+5. **Add to your `.env`:**
+   ```bash
+   CLOUDFLARE_TUNNEL_ID=claude-sms
+   CLOUDFLARE_TUNNEL_URL=https://claude-sms.yourdomain.com
+   ```
+
+6. **Set Telnyx webhook once:**
+   ```
+   https://claude-sms.yourdomain.com/webhook/telnyx
    ```
 
 Now the webhook URL stays the same across restarts.
