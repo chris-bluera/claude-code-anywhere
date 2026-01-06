@@ -1,19 +1,66 @@
 # Claude SMS
 
-SMS notifications and bidirectional communication for Claude Code via Twilio.
+[![CI](https://github.com/chris-bluera/claude-sms/actions/workflows/ci.yml/badge.svg)](https://github.com/chris-bluera/claude-sms/actions/workflows/ci.yml)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
-Get notified when Claude needs input and respond from anywhere via text message.
+> **Stay connected to your Claude Code sessions from anywhere.** Get SMS notifications when tasks complete, approve operations remotely, and respond to prompts—all from your phone.
 
-## Features
+## Table of Contents
 
-- **Notifications** - Get SMS alerts when tasks complete or errors occur
-- **Interactive Prompts** - Respond to Claude's questions via text
-- **Approval Requests** - Approve or deny destructive operations remotely
-- **Multi-Session** - Track multiple Claude Code sessions independently
-- **Easy Toggle** - Enable/disable SMS with `/sms on` or `/sms off`
-- **Built-in Tunnel** - Automatic webhook exposure via cloudflared
+<details>
+<summary>Click to expand</summary>
 
-## Quick Start
+- [Why Claude SMS?](#-why-claude-sms)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Quick Reference](#-quick-reference)
+- [Usage](#-usage)
+- [How It Works](#-how-it-works)
+- [SMS Format](#-sms-format)
+- [Hook Events](#-hook-events)
+- [Configuration](#-configuration)
+- [Security](#-security)
+- [Troubleshooting](#-troubleshooting)
+- [Development](#-development)
+- [Technologies](#-technologies)
+- [Cost Estimate](#-cost-estimate)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Support](#-support)
+
+</details>
+
+---
+
+## ✨ Why Claude SMS?
+
+When Claude Code needs your input—a question, approval, or notification—you shouldn't have to be tethered to your terminal.
+
+| Scenario | Without Claude SMS | With Claude SMS |
+|----------|-------------------|-----------------|
+| Task completes | Sit and wait, or miss it | Get SMS: "Task completed!" |
+| Claude asks a question | Session blocks until you notice | Get SMS, reply from anywhere |
+| Destructive operation | Must be at terminal to approve | Approve via text: "Y" |
+| Long-running task | Keep checking back | Do other things, get notified |
+
+**The result:** Run background tasks with confidence. Walk away. Your phone keeps you connected.
+
+---
+
+## 🚀 Features
+
+- **📱 Notifications** — Get SMS alerts when tasks complete or errors occur
+- **💬 Interactive Prompts** — Respond to Claude's questions via text
+- **✅ Approval Requests** — Approve or deny destructive operations remotely
+- **🔀 Multi-Session** — Track multiple Claude Code sessions independently
+- **⚡ Easy Toggle** — Enable/disable SMS with `/sms on` or `/sms off`
+- **🌐 Built-in Tunnel** — Automatic webhook exposure via cloudflared
+- **🔒 Persistent URLs** — Optional stable tunnel URLs (no Twilio reconfiguration)
+
+---
+
+## 🏁 Quick Start
 
 ### Prerequisites
 
@@ -66,9 +113,11 @@ Or in Claude Code:
 /sms-test
 ```
 
-## Usage
+---
 
-### Commands
+## 📋 Quick Reference
+
+### Plugin Commands
 
 | Command | Description |
 |---------|-------------|
@@ -78,7 +127,7 @@ Or in Claude Code:
 | `/sms status` | Show current status |
 | `/sms-test` | Send a test SMS |
 
-### CLI
+### CLI Commands
 
 | Command | Description |
 |---------|-------------|
@@ -89,7 +138,31 @@ Or in Claude Code:
 | `npx claude-sms test` | Send test SMS |
 | `npx claude-sms config` | Show configuration |
 
-## How It Works
+---
+
+## 📖 Usage
+
+### Enabling/Disabling SMS
+
+```bash
+# In Claude Code
+/sms on          # Enable for this session
+/sms off         # Disable for this session
+/sms off --all   # Disable globally
+/sms status      # Check current state
+```
+
+### From Command Line
+
+```bash
+npx claude-sms enable   # Enable globally
+npx claude-sms disable  # Disable globally
+npx claude-sms status   # Check server and settings
+```
+
+---
+
+## 🔄 How It Works
 
 ```
 ┌─────────────────┐    Hook     ┌─────────────────┐    SMS     ┌──────────┐
@@ -106,7 +179,9 @@ Or in Claude Code:
 5. Twilio webhook delivers reply to bridge server
 6. Hook retrieves response and returns it to Claude Code
 
-## SMS Format
+---
+
+## 📨 SMS Format
 
 ### Outbound
 
@@ -130,7 +205,9 @@ With session ID (multiple sessions):
 [CC-abc123] Yes
 ```
 
-## Hook Events
+---
+
+## 🎣 Hook Events
 
 | Event | Trigger | SMS Sent |
 |-------|---------|----------|
@@ -138,7 +215,9 @@ With session ID (multiple sessions):
 | `Stop` | Session ends | Yes (by default) |
 | `PreToolUse` | Before Bash/Write/Edit | Yes (awaits approval) |
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 ### Environment Variables
 
@@ -194,59 +273,141 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 }
 ```
 
-## Security
+---
 
-- **Phone Verification** - Only responds to registered phone number
-- **Session IDs** - Prevent cross-session interference
-- **Timeout** - Sessions expire after 30 minutes of inactivity
-- **No Secrets** - Never sends credentials/secrets via SMS
+## 🔒 Security
 
-## Troubleshooting
+- **Phone Verification** — Only responds to registered phone number
+- **Session IDs** — Prevent cross-session interference
+- **Timeout** — Sessions expire after 30 minutes of inactivity
+- **No Secrets** — Never sends credentials/secrets via SMS
 
-### SMS Not Sending
+---
+
+## 🔧 Troubleshooting
+
+<details>
+<summary><b>❌ SMS Not Sending</b></summary>
 
 1. Check environment variables: `npx claude-sms config`
 2. Verify Twilio credentials in [Twilio Console](https://console.twilio.com)
 3. Ensure phone number is SMS-capable
 4. Check server logs for errors
+</details>
 
-### Response Not Received
+<details>
+<summary><b>📭 Response Not Received</b></summary>
 
 1. Verify tunnel is running: look for URL in server output
 2. Check Twilio webhook configuration matches tunnel URL
 3. Ensure session ID matches in reply (`[CC-xxx]` prefix)
+</details>
 
-### Server Not Starting
+<details>
+<summary><b>🚫 Server Not Starting</b></summary>
 
 1. Check if port 3847 is in use: `lsof -i :3847`
 2. Verify all required env vars are set
 3. Try a different port: `npx claude-sms server -p 3848`
+</details>
 
-## Development
+<details>
+<summary><b>🔗 Tunnel Issues</b></summary>
+
+1. Ensure cloudflared is installed: `which cloudflared`
+2. Check cloudflared logs in server output
+3. For persistent tunnels, verify `CLOUDFLARE_TUNNEL_ID` matches your tunnel name
+4. Check DNS configuration in Cloudflare dashboard
+</details>
+
+---
+
+## 🛠️ Development
+
+### Setup
 
 ```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run linting
-npm run lint
-
-# Type check
-npm run typecheck
-
-# Format code
-npm run format
+git clone https://github.com/chris-bluera/claude-sms.git
+cd claude-sms
+bun install
+bun run build
 ```
 
-## Cost Estimate
+### Commands
 
-- Twilio SMS (US): ~$0.0079/message
-- Cloudflared tunnel: Free
-- Estimated monthly (moderate use): $5-15
+| Command | Description |
+|---------|-------------|
+| `bun run build` | Compile TypeScript to dist/ |
+| `bun run test` | Run tests in watch mode |
+| `bun run test:run` | Run tests once |
+| `bun run lint` | Run ESLint |
+| `bun run typecheck` | Run TypeScript type checking |
+| `bun run precommit` | Full validation (lint, typecheck, tests, build) |
+| `bun run version:patch` | Bump patch version + changelog |
+| `bun run version:minor` | Bump minor version + changelog |
+| `bun run version:major` | Bump major version + changelog |
 
-## License
+### Claude Code Settings
 
-MIT
+For the best development experience, copy the example settings:
+
+```bash
+cp .claude/settings.local.json.example .claude/settings.local.json
+```
+
+This provides:
+- Auto-validation after code edits
+- Pre-approved common commands
+- Desktop notifications
+
+### Releasing
+
+1. Make changes and commit
+2. Bump version: `bun run version:patch`
+3. Commit: `git commit -am "chore: bump version to X.Y.Z"`
+4. Push: `git push`
+5. **GitHub Actions automatically creates the release**
+
+---
+
+## 🔬 Technologies
+
+- **[Commander.js](https://github.com/tj/commander.js)** — CLI framework
+- **[Twilio SDK](https://github.com/twilio/twilio-node)** — SMS sending/receiving
+- **[cloudflared](https://github.com/cloudflare/cloudflared)** — Secure tunnel for webhooks
+- **[TypeScript](https://www.typescriptlang.org/)** — Type-safe development
+- **[Vitest](https://vitest.dev/)** — Testing framework
+
+---
+
+## 💰 Cost Estimate
+
+| Service | Cost |
+|---------|------|
+| Twilio SMS (US) | ~$0.0079/message |
+| Cloudflared tunnel | Free |
+| **Estimated monthly (moderate use)** | **$5-15** |
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests
+4. Submit a pull request
+
+---
+
+## 📄 License
+
+MIT — See [LICENSE](./LICENSE) for details.
+
+---
+
+## 💬 Support
+
+- **Issues**: [GitHub Issues](https://github.com/chris-bluera/claude-sms/issues)
+- **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
