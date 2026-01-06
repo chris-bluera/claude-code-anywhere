@@ -118,14 +118,12 @@ export class BridgeServer {
    * Handle incoming HTTP request
    */
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const url = new URL(req.url ?? '/', `http://localhost:${String(this.port)}`);
-    const path = url.pathname;
-    const method = req.method ?? 'GET';
-
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    const method = req.method ?? 'GET';
 
     if (method === 'OPTIONS') {
       res.writeHead(204);
@@ -134,6 +132,8 @@ export class BridgeServer {
     }
 
     try {
+      const url = new URL(req.url ?? '/', `http://localhost:${String(this.port)}`);
+      const path = url.pathname;
       const ctx = this.getContext();
 
       // POST /webhook/telnyx
