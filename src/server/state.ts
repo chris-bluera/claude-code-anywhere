@@ -130,13 +130,11 @@ function isValidState(value: unknown): value is GlobalState {
     return false;
   }
 
-  const obj = value as Record<string, unknown>;
-
-  if (typeof obj['enabled'] !== 'boolean') {
+  if (!('enabled' in value) || typeof value.enabled !== 'boolean') {
     return false;
   }
 
-  if (typeof obj['hooks'] !== 'object' || obj['hooks'] === null) {
+  if (!('hooks' in value) || typeof value.hooks !== 'object' || value.hooks === null) {
     return false;
   }
 

@@ -125,7 +125,7 @@ async function downloadCloudflared(): Promise<Result<string, string>> {
     if (!response.ok) {
       return {
         success: false,
-        error: `Failed to download cloudflared: ${response.status} ${response.statusText}`,
+        error: `Failed to download cloudflared: ${String(response.status)} ${response.statusText}`,
       };
     }
 
@@ -176,7 +176,7 @@ async function ensureCloudflared(): Promise<Result<string, string>> {
 export class CloudflaredTunnel {
   private process: ChildProcess | null = null;
   private tunnelUrl: string | null = null;
-  private port: number;
+  private readonly port: number;
   private onUrlCallback: ((url: string) => void) | null = null;
 
   constructor(port: number) {
@@ -216,9 +216,9 @@ export class CloudflaredTunnel {
    */
   private startQuickTunnel(cloudflaredPath: string): Promise<Result<string, string>> {
     return new Promise((resolve) => {
-      console.log(`[tunnel] Starting quick tunnel on port ${this.port}`);
+      console.log(`[tunnel] Starting quick tunnel on port ${String(this.port)}`);
 
-      this.process = spawn(cloudflaredPath, ['tunnel', '--url', `http://localhost:${this.port}`], {
+      this.process = spawn(cloudflaredPath, ['tunnel', '--url', `http://localhost:${String(this.port)}`], {
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 
@@ -268,7 +268,7 @@ export class CloudflaredTunnel {
       });
 
       this.process.on('exit', (code) => {
-        console.log(`[tunnel] Process exited with code ${code ?? 'null'}`);
+        console.log(`[tunnel] Process exited with code ${code !== null ? String(code) : 'null'}`);
         this.process = null;
         this.tunnelUrl = null;
       });
@@ -284,7 +284,7 @@ export class CloudflaredTunnel {
     tunnelUrl?: string
   ): Promise<Result<string, string>> {
     return new Promise((resolve) => {
-      console.log(`[tunnel] Starting persistent tunnel "${tunnelName}" on port ${this.port}`);
+      console.log(`[tunnel] Starting persistent tunnel "${tunnelName}" on port ${String(this.port)}`);
 
       if (tunnelUrl === undefined) {
         console.warn('[tunnel] Warning: CLOUDFLARE_TUNNEL_URL not set');
@@ -295,7 +295,7 @@ export class CloudflaredTunnel {
       // For simplicity, we use the --url flag with tunnel run which handles ingress
       this.process = spawn(
         cloudflaredPath,
-        ['tunnel', 'run', '--url', `http://localhost:${this.port}`, tunnelName],
+        ['tunnel', 'run', '--url', `http://localhost:${String(this.port)}`, tunnelName],
         {
           stdio: ['ignore', 'pipe', 'pipe'],
         }
@@ -365,7 +365,7 @@ export class CloudflaredTunnel {
       });
 
       this.process.on('exit', (code) => {
-        console.log(`[tunnel] Process exited with code ${code ?? 'null'}`);
+        console.log(`[tunnel] Process exited with code ${code !== null ? String(code) : 'null'}`);
         this.process = null;
         this.tunnelUrl = null;
       });

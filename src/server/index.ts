@@ -32,7 +32,7 @@ export class BridgeServer {
   private twilioClient: TwilioClient | null = null;
   private tunnelUrl: string | null = null;
   private startTime: number = 0;
-  private port: number;
+  private readonly port: number;
 
   constructor(port: number = DEFAULT_PORT) {
     this.port = port;
@@ -118,7 +118,7 @@ export class BridgeServer {
    * Handle incoming HTTP request
    */
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const url = new URL(req.url ?? '/', `http://localhost:${this.port}`);
+    const url = new URL(req.url ?? '/', `http://localhost:${String(this.port)}`);
     const path = url.pathname;
     const method = req.method ?? 'GET';
 

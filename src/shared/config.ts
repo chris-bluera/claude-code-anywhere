@@ -31,7 +31,16 @@ export function loadTwilioConfig(): Result<TwilioConfig, string> {
     missing.push('SMS_USER_PHONE');
   }
 
-  if (missing.length > 0) {
+  if (
+    accountSid === undefined ||
+    accountSid === '' ||
+    authToken === undefined ||
+    authToken === '' ||
+    fromNumber === undefined ||
+    fromNumber === '' ||
+    userPhone === undefined ||
+    userPhone === ''
+  ) {
     return {
       success: false,
       error: `Missing required environment variables: ${missing.join(', ')}`,
@@ -41,10 +50,10 @@ export function loadTwilioConfig(): Result<TwilioConfig, string> {
   return {
     success: true,
     data: {
-      accountSid: accountSid as string,
-      authToken: authToken as string,
-      fromNumber: fromNumber as string,
-      userPhone: userPhone as string,
+      accountSid,
+      authToken,
+      fromNumber,
+      userPhone,
     },
   };
 }

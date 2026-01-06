@@ -66,7 +66,7 @@ function getEventHeader(event: HookEvent): string {
  * Twilio client for sending and receiving SMS
  */
 export class TwilioClient {
-  private config: TwilioConfig;
+  private readonly config: TwilioConfig;
 
   constructor(config: TwilioConfig) {
     this.config = config;
@@ -98,14 +98,18 @@ export class TwilioClient {
         const errorText = await response.text();
         return {
           success: false,
-          error: `Twilio API error: ${response.status} - ${errorText}`,
+          error: `Twilio API error: ${String(response.status)} - ${errorText}`,
         };
       }
 
-      const data = (await response.json()) as { sid?: string };
+      const rawData: unknown = await response.json();
+      const sid =
+        typeof rawData === 'object' && rawData !== null && 'sid' in rawData && typeof rawData.sid === 'string'
+          ? rawData.sid
+          : 'unknown';
       return {
         success: true,
-        data: data.sid ?? 'unknown',
+        data: sid,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

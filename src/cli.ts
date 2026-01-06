@@ -12,6 +12,32 @@ import { enableGlobal, disableGlobal, loadState } from './server/state.js';
 
 const program = new Command();
 
+/**
+ * Type guard for status response
+ */
+function isStatusResponse(value: unknown): value is {
+  status: string;
+  activeSessions: number;
+  pendingResponses: number;
+  uptime: number;
+  tunnelUrl: string | null;
+} {
+  if (typeof value !== 'object' || value === null) return false;
+  if (!('status' in value) || typeof value.status !== 'string') return false;
+  if (!('activeSessions' in value) || typeof value.activeSessions !== 'number') return false;
+  if (!('pendingResponses' in value) || typeof value.pendingResponses !== 'number') return false;
+  if (!('uptime' in value) || typeof value.uptime !== 'number') return false;
+  if (!('tunnelUrl' in value)) return false;
+  return true;
+}
+
+/**
+ * Type guard for send SMS result
+ */
+function isSendResult(value: unknown): value is { sid: string } {
+  return typeof value === 'object' && value !== null && 'sid' in value && typeof value.sid === 'string';
+}
+
 program
   .name('claude-sms')
   .description('SMS notifications and bidirectional communication for Claude Code')
@@ -99,21 +125,19 @@ program
         process.exit(1);
       }
 
-      const status = (await response.json()) as {
-        status: string;
-        activeSessions: number;
-        pendingResponses: number;
-        uptime: number;
-        tunnelUrl: string | null;
-      };
+      const rawStatus: unknown = await response.json();
+      if (!isStatusResponse(rawStatus)) {
+        console.error('Error: Invalid response from server');
+        process.exit(1);
+      }
 
       console.log('SMS Bridge Server Status:');
-      console.log(`  Status: ${status.status}`);
-      console.log(`  Active Sessions: ${status.activeSessions}`);
-      console.log(`  Pending Responses: ${status.pendingResponses}`);
-      console.log(`  Uptime: ${status.uptime} seconds`);
-      console.log(`  Tunnel URL: ${status.tunnelUrl ?? 'Not active'}`);
-    } catch (_error) {
+      console.log(`  Status: ${rawStatus.status}`);
+      console.log(`  Active Sessions: ${String(rawStatus.activeSessions)}`);
+      console.log(`  Pending Responses: ${String(rawStatus.pendingResponses)}`);
+      console.log(`  Uptime: ${String(rawStatus.uptime)} seconds`);
+      console.log(`  Tunnel URL: ${rawStatus.tunnelUrl ?? 'Not active'}`);
+    } catch {
       console.error('Error: Could not connect to server. Is it running?');
       process.exit(1);
     }
@@ -186,13 +210,17 @@ program
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Error: Twilio API returned ${response.status}`);
+        console.error(`Error: Twilio API returned ${String(response.status)}`);
         console.error(errorText);
         process.exit(1);
       }
 
-      const result = (await response.json()) as { sid: string };
-      console.log(`✓ Test SMS sent successfully (SID: ${result.sid})`);
+      const rawResult: unknown = await response.json();
+      if (!isSendResult(rawResult)) {
+        console.error('Error: Invalid response from Twilio');
+        process.exit(1);
+      }
+      console.log(`✓ Test SMS sent successfully (SID: ${rawResult.sid})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Error: ${message}`);
@@ -228,7 +256,7 @@ program
       console.log(`  From Number: ${configResult.data.twilio.fromNumber}`);
       console.log(`  User Phone: ${configResult.data.twilio.userPhone}`);
       console.log(`  Bridge URL: ${configResult.data.bridgeUrl}`);
-      console.log(`  Port: ${configResult.data.port}`);
+      console.log(`  Port: ${String(configResult.data.port)}`);
     } else {
       console.log('Twilio Configuration:');
       console.log(`  Error: ${configResult.error}`);

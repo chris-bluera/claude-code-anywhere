@@ -10,8 +10,8 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
  * In-memory session store
  */
 class SessionManager {
-  private sessions: Map<string, Session> = new Map();
-  private pendingResponses: Map<string, SMSResponse> = new Map();
+  private readonly sessions: Map<string, Session> = new Map();
+  private readonly pendingResponses: Map<string, SMSResponse> = new Map();
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   /**

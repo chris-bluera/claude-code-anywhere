@@ -3,15 +3,19 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
-import type {
-  SendSMSRequest,
-  RegisterSessionRequest,
-  TwilioWebhookPayload,
-  ServerStatus,
-} from '../shared/types.js';
+import type { ServerStatus, HookEvent } from '../shared/types.js';
 import { sessionManager } from './sessions.js';
 import { stateManager } from './state.js';
 import { TwilioClient, generateTwiML } from './twilio.js';
+
+const VALID_HOOK_EVENTS = new Set<string>(['Notification', 'Stop', 'PreToolUse', 'UserPromptSubmit']);
+
+/**
+ * Type guard for HookEvent
+ */
+function isHookEvent(value: unknown): value is HookEvent {
+  return typeof value === 'string' && VALID_HOOK_EVENTS.has(value);
+}
 
 /**
  * Route handler context
@@ -37,9 +41,9 @@ function parseUrlEncoded(body: string): Record<string, string> {
 /**
  * Parse JSON body
  */
-function parseJSON<T>(body: string): T | null {
+function parseJSON(body: string): unknown {
   try {
-    return JSON.parse(body) as T;
+    return JSON.parse(body);
   } catch {
     return null;
   }
@@ -92,10 +96,10 @@ export async function handleTwilioWebhook(
   ctx: RouteContext
 ): Promise<void> {
   const body = await readBody(req);
-  const data = parseUrlEncoded(body) as unknown as TwilioWebhookPayload;
+  const rawData = parseUrlEncoded(body);
 
-  const from = data.From ?? '';
-  const messageBody = data.Body ?? '';
+  const from = rawData['From'] ?? '';
+  const messageBody = rawData['Body'] ?? '';
 
   console.log(`[webhook] SMS received from ${from}: ${messageBody}`);
 
@@ -148,25 +152,35 @@ export async function handleSendSMS(
   ctx: RouteContext
 ): Promise<void> {
   const body = await readBody(req);
-  const data = parseJSON<SendSMSRequest>(body);
+  const rawData = parseJSON(body);
 
-  if (data === null) {
+  if (rawData === null || typeof rawData !== 'object') {
     sendError(res, 400, 'Invalid JSON body');
     return;
   }
 
-  const { sessionId, event, message } = data;
-
   if (
-    sessionId === undefined ||
-    sessionId === '' ||
-    event === undefined ||
-    message === undefined ||
-    message === ''
+    !('sessionId' in rawData) ||
+    typeof rawData.sessionId !== 'string' ||
+    rawData.sessionId === ''
   ) {
-    sendError(res, 400, 'Missing required fields: sessionId, event, message');
+    sendError(res, 400, 'Missing or invalid sessionId');
     return;
   }
+
+  if (!('event' in rawData) || !isHookEvent(rawData.event)) {
+    sendError(res, 400, 'Missing or invalid event');
+    return;
+  }
+
+  if (!('message' in rawData) || typeof rawData.message !== 'string' || rawData.message === '') {
+    sendError(res, 400, 'Missing or invalid message');
+    return;
+  }
+
+  const sessionId = rawData.sessionId;
+  const event = rawData.event;
+  const message = rawData.message;
 
   // Check if enabled
   if (!stateManager.isHookEnabled(event)) {
@@ -198,25 +212,35 @@ export async function handleRegisterSession(
   ctx: RouteContext
 ): Promise<void> {
   const body = await readBody(req);
-  const data = parseJSON<RegisterSessionRequest>(body);
+  const rawData = parseJSON(body);
 
-  if (data === null) {
+  if (rawData === null || typeof rawData !== 'object') {
     sendError(res, 400, 'Invalid JSON body');
     return;
   }
 
-  const { sessionId, event, prompt } = data;
-
   if (
-    sessionId === undefined ||
-    sessionId === '' ||
-    event === undefined ||
-    prompt === undefined ||
-    prompt === ''
+    !('sessionId' in rawData) ||
+    typeof rawData.sessionId !== 'string' ||
+    rawData.sessionId === ''
   ) {
-    sendError(res, 400, 'Missing required fields: sessionId, event, prompt');
+    sendError(res, 400, 'Missing or invalid sessionId');
     return;
   }
+
+  if (!('event' in rawData) || !isHookEvent(rawData.event)) {
+    sendError(res, 400, 'Missing or invalid event');
+    return;
+  }
+
+  if (!('prompt' in rawData) || typeof rawData.prompt !== 'string' || rawData.prompt === '') {
+    sendError(res, 400, 'Missing or invalid prompt');
+    return;
+  }
+
+  const sessionId = rawData.sessionId;
+  const event = rawData.event;
+  const prompt = rawData.prompt;
 
   // Check if enabled
   if (!stateManager.isHookEnabled(event)) {
