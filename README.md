@@ -342,13 +342,25 @@ For a persistent URL that never changes:
    cloudflared tunnel route dns claude-sms claude-sms.yourdomain.com
    ```
 
-5. **Add to your `.env`:**
+5. **Create config file** at `~/.cloudflared/config.yml`:
+   ```yaml
+   tunnel: claude-sms
+   credentials-file: ~/.cloudflared/<tunnel-id>.json
+
+   ingress:
+     - hostname: claude-sms.yourdomain.com
+       service: http://localhost:3847
+     - service: http_status:404
+   ```
+   (Find your `<tunnel-id>.json` filename in `~/.cloudflared/`)
+
+6. **Add to your `.env`:**
    ```bash
    CLOUDFLARE_TUNNEL_ID=claude-sms
    CLOUDFLARE_TUNNEL_URL=https://claude-sms.yourdomain.com
    ```
 
-6. **Set Telnyx webhook once:**
+7. **Set Telnyx webhook once:**
    ```
    https://claude-sms.yourdomain.com/webhook/telnyx
    ```
