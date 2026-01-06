@@ -106,10 +106,12 @@ class SessionManager {
     }
     /**
      * Store a response for a session
+     * @throws Error if session does not exist
      */
     storeResponse(sessionId, response, from) {
-        if (!this.sessions.has(sessionId)) {
-            return false;
+        const session = this.sessions.get(sessionId);
+        if (session === undefined) {
+            throw new Error(`Session ${sessionId} does not exist`);
         }
         this.pendingResponses.set(sessionId, {
             sessionId,
@@ -118,12 +120,8 @@ class SessionManager {
             timestamp: Date.now(),
         });
         // Update session activity
-        const session = this.sessions.get(sessionId);
-        if (session !== undefined) {
-            session.lastActivity = Date.now();
-            session.pendingResponse = null;
-        }
-        return true;
+        session.lastActivity = Date.now();
+        session.pendingResponse = null;
     }
     /**
      * Get and consume a response for a session

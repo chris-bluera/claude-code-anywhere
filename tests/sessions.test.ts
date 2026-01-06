@@ -54,6 +54,21 @@ describe('SessionManager', () => {
     });
   });
 
+  describe('storeResponse', () => {
+    it('throws when storing response for non-existent session', () => {
+      // CLAUDE.md: fail early and fast - throw on unexpected state
+      expect(() =>
+        sessionManager.storeResponse('nonexistent', 'response', '+1234567890')
+      ).toThrow('Session nonexistent does not exist');
+    });
+
+    it('stores response for existing session', () => {
+      sessionManager.registerSession('test-session', 'Notification', 'test prompt');
+      sessionManager.storeResponse('test-session', 'my response', '+1234567890');
+      expect(sessionManager.hasResponse('test-session')).toBe(true);
+    });
+  });
+
   describe('registerSession', () => {
     it('new sessions start with enabled=true', () => {
       // New sessions are enabled by default per specification

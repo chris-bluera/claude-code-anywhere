@@ -54,8 +54,9 @@ declare class SessionManager {
     isSessionEnabled(sessionId: string): boolean;
     /**
      * Store a response for a session
+     * @throws Error if session does not exist
      */
-    storeResponse(sessionId: string, response: string, from: string): boolean;
+    storeResponse(sessionId: string, response: string, from: string): void;
     /**
      * Get and consume a response for a session
      */
