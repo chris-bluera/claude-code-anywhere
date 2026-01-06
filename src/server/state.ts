@@ -30,17 +30,30 @@ export function loadState(): GlobalState {
   const content = readFileSync(statePath, 'utf-8');
   const parsed: unknown = JSON.parse(content);
 
+  // Check basic structure first for better error messages
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error(`Invalid state file format at ${statePath}: expected object`);
+  }
+
+  if (!('hooks' in parsed) || typeof parsed.hooks !== 'object' || parsed.hooks === null) {
+    throw new Error(`Invalid state file format at ${statePath}: missing hooks object`);
+  }
+
+  const missing = getMissingHooks(parsed.hooks);
+  if (missing.length > 0) {
+    throw new Error(
+      `Invalid state file format at ${statePath}: missing required hook fields: ${missing.join(', ')}`
+    );
+  }
+
   if (!isValidState(parsed)) {
     throw new Error(`Invalid state file format at ${statePath}`);
   }
 
-  // Merge with defaults to ensure all fields exist
+  // Return validated state directly - no merging with defaults
   return {
     enabled: parsed.enabled,
-    hooks: {
-      ...DEFAULT_STATE.hooks,
-      ...parsed.hooks,
-    },
+    hooks: parsed.hooks,
   };
 }
 
@@ -120,8 +133,15 @@ export function isHookEnabled(hook: HookEvent): boolean {
   return state.enabled && state.hooks[hook];
 }
 
+const REQUIRED_HOOKS: readonly HookEvent[] = [
+  'Notification',
+  'Stop',
+  'PreToolUse',
+  'UserPromptSubmit',
+] as const;
+
 /**
- * Type guard for GlobalState
+ * Type guard for GlobalState - validates all required fields exist with correct types
  */
 function isValidState(value: unknown): value is GlobalState {
   if (typeof value !== 'object' || value === null) {
@@ -136,7 +156,28 @@ function isValidState(value: unknown): value is GlobalState {
     return false;
   }
 
+  // Validate all required hooks exist and are booleans
+  const hooks = value.hooks;
+  const hookEntries = Object.entries(hooks);
+  const hookMap = new Map<string, unknown>(hookEntries);
+
+  for (const hook of REQUIRED_HOOKS) {
+    if (!hookMap.has(hook)) {
+      return false;
+    }
+    if (typeof hookMap.get(hook) !== 'boolean') {
+      return false;
+    }
+  }
+
   return true;
+}
+
+/**
+ * Get missing hook names for error message
+ */
+function getMissingHooks(hooks: object): string[] {
+  return REQUIRED_HOOKS.filter((hook) => !(hook in hooks));
 }
 
 /**
@@ -176,6 +217,7 @@ export class StateManager {
    * @throws Error if state cannot be saved
    */
   enable(): boolean {
+    this.reload(); // Reload first to prevent lost updates
     this.state.enabled = true;
     saveState(this.state);
     return true;
@@ -186,6 +228,7 @@ export class StateManager {
    * @throws Error if state cannot be saved
    */
   disable(): boolean {
+    this.reload(); // Reload first to prevent lost updates
     this.state.enabled = false;
     saveState(this.state);
     return true;

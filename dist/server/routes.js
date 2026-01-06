@@ -26,21 +26,32 @@ export async function readBody(req) {
     return new Promise((resolve, reject) => {
         let body = '';
         let size = 0;
-        req.on('data', (chunk) => {
+        const cleanup = () => {
+            req.removeListener('data', onData);
+            req.removeListener('error', onError);
+            req.removeListener('end', onEnd);
+        };
+        const onData = (chunk) => {
             size += chunk.length;
             if (size > MAX_BODY_SIZE) {
+                cleanup();
                 req.destroy();
                 reject(new Error(`Request body exceeds size limit of ${String(MAX_BODY_SIZE)} bytes`));
                 return;
             }
             body += chunk.toString();
-        });
-        req.on('error', (err) => {
+        };
+        const onError = (err) => {
+            cleanup();
             reject(err);
-        });
-        req.on('end', () => {
+        };
+        const onEnd = () => {
+            cleanup();
             resolve(body);
-        });
+        };
+        req.on('data', onData);
+        req.on('error', onError);
+        req.on('end', onEnd);
     });
 }
 /**
