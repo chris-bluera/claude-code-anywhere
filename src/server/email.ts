@@ -10,7 +10,7 @@ import { ImapFlow } from 'imapflow';
 
 type NodemailerTransporter = ReturnType<typeof nodemailer.createTransport>;
 import type { Result, HookEvent, ParsedSMS } from '../shared/types.js';
-import { EMAIL_POLL_INTERVAL_MS, MAX_EMAIL_BODY_LENGTH } from '../shared/constants.js';
+import { MAX_EMAIL_BODY_LENGTH } from '../shared/constants.js';
 
 /**
  * Configuration for Email client
@@ -23,6 +23,7 @@ export interface EmailConfig {
   smtpPort: number; // SMTP server port
   imapHost: string; // IMAP server host
   imapPort: number; // IMAP server port
+  pollIntervalMs: number; // IMAP polling interval
 }
 
 /**
@@ -168,7 +169,7 @@ export class EmailClient {
   /**
    * Start polling for incoming emails
    */
-  startPolling(callback: (message: ParsedSMS) => void, intervalMs: number = EMAIL_POLL_INTERVAL_MS): void {
+  startPolling(callback: (message: ParsedSMS) => void): void {
     this.messageCallback = callback;
 
     if (this.pollInterval !== null) {
@@ -176,6 +177,7 @@ export class EmailClient {
       return;
     }
 
+    const intervalMs = this.config.pollIntervalMs;
     console.log(`[email] Starting to poll for emails every ${String(intervalMs)}ms`);
 
     // Do initial check
@@ -271,11 +273,17 @@ export class EmailClient {
   }
 
   /**
-   * Extract just the reply text, removing quoted content
+   * Extract just the reply text, removing MIME headers and quoted content
    */
   private extractReplyText(body: string): string {
-    // Common patterns for quoted text in email replies
-    const lines = body.split('\n');
+    // First, strip MIME parts and decode
+    let cleanBody = this.stripMimeContent(body);
+
+    // Decode quoted-printable encoding
+    cleanBody = this.decodeQuotedPrintable(cleanBody);
+
+    // Now extract just the reply, removing quoted original
+    const lines = cleanBody.split('\n');
     const replyLines: string[] = [];
 
     for (const line of lines) {
@@ -289,6 +297,64 @@ export class EmailClient {
     }
 
     return replyLines.join('\n').trim();
+  }
+
+  /**
+   * Strip MIME boundaries and headers from email body
+   */
+  private stripMimeContent(body: string): string {
+    const lines = body.split('\n');
+    const contentLines: string[] = [];
+    let inMimeHeader = false;
+    let skipUntilBoundary = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Skip MIME boundaries
+      if (trimmed.startsWith('--') && trimmed.length > 10) {
+        inMimeHeader = true;
+        skipUntilBoundary = false;
+        continue;
+      }
+
+      // Skip MIME headers after boundary
+      if (inMimeHeader) {
+        if (trimmed === '') {
+          inMimeHeader = false;
+          continue;
+        }
+        if (trimmed.startsWith('Content-')) {
+          // Check if this is HTML part - skip it entirely
+          if (trimmed.includes('text/html')) {
+            skipUntilBoundary = true;
+          }
+          continue;
+        }
+      }
+
+      // Skip HTML content
+      if (skipUntilBoundary) {
+        continue;
+      }
+
+      contentLines.push(line);
+    }
+
+    return contentLines.join('\n');
+  }
+
+  /**
+   * Decode quoted-printable encoded text
+   */
+  private decodeQuotedPrintable(text: string): string {
+    return text
+      // Handle soft line breaks (=\n)
+      .replace(/=\r?\n/g, '')
+      // Decode =XX hex sequences
+      .replace(/=([0-9A-Fa-f]{2})/g, (_, hex: string) => {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
   }
 
   /**

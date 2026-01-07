@@ -66,6 +66,7 @@ export interface EmailConfig {
   smtpPort: number;
   imapHost: string;
   imapPort: number;
+  pollIntervalMs: number;
 }
 
 /**

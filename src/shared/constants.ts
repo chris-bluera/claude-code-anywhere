@@ -21,7 +21,7 @@ export const DEFAULT_SMTP_PORT = 587;
 
 export const DEFAULT_IMAP_HOST = 'imap.gmail.com';
 export const DEFAULT_IMAP_PORT = 993;
-export const EMAIL_POLL_INTERVAL_MS = 5000;
+export const DEFAULT_EMAIL_POLL_INTERVAL_MS = 5000;
 
 // =============================================================================
 // Email - Formatting

@@ -16,6 +16,7 @@ export interface EmailConfig {
     smtpPort: number;
     imapHost: string;
     imapPort: number;
+    pollIntervalMs: number;
 }
 /**
  * Format an email subject with session ID prefix
@@ -58,7 +59,7 @@ export declare class EmailClient {
     /**
      * Start polling for incoming emails
      */
-    startPolling(callback: (message: ParsedSMS) => void, intervalMs?: number): void;
+    startPolling(callback: (message: ParsedSMS) => void): void;
     /**
      * Check for new emails via IMAP
      */
@@ -68,9 +69,17 @@ export declare class EmailClient {
      */
     private parseEmail;
     /**
-     * Extract just the reply text, removing quoted content
+     * Extract just the reply text, removing MIME headers and quoted content
      */
     private extractReplyText;
+    /**
+     * Strip MIME boundaries and headers from email body
+     */
+    private stripMimeContent;
+    /**
+     * Decode quoted-printable encoded text
+     */
+    private decodeQuotedPrintable;
     /**
      * Stop polling for emails
      */

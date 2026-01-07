@@ -9,6 +9,7 @@ import {
   DEFAULT_SMTP_PORT,
   DEFAULT_IMAP_HOST,
   DEFAULT_IMAP_PORT,
+  DEFAULT_EMAIL_POLL_INTERVAL_MS,
 } from './constants.js';
 
 /**
@@ -91,6 +92,20 @@ export function loadEmailConfig(): Result<EmailConfig, string> {
     };
   }
 
+  // Poll interval with default
+  const pollIntervalEnv = process.env['EMAIL_POLL_INTERVAL_MS'];
+  const pollIntervalMs =
+    pollIntervalEnv !== undefined && pollIntervalEnv !== ''
+      ? parseInt(pollIntervalEnv, 10)
+      : DEFAULT_EMAIL_POLL_INTERVAL_MS;
+
+  if (isNaN(pollIntervalMs) || pollIntervalMs < 1000) {
+    return {
+      success: false,
+      error: `Invalid EMAIL_POLL_INTERVAL_MS: ${pollIntervalEnv ?? 'undefined'} (minimum 1000ms)`,
+    };
+  }
+
   return {
     success: true,
     data: {
@@ -101,6 +116,7 @@ export function loadEmailConfig(): Result<EmailConfig, string> {
       smtpPort,
       imapHost,
       imapPort,
+      pollIntervalMs,
     },
   };
 }

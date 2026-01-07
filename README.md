@@ -227,6 +227,7 @@ Simply reply to the email. The session ID is extracted from the subject line aut
 | `SMTP_PORT` | No | 587 | SMTP server port |
 | `IMAP_HOST` | No | imap.gmail.com | IMAP server hostname |
 | `IMAP_PORT` | No | 993 | IMAP server port |
+| `EMAIL_POLL_INTERVAL_MS` | No | 5000 | How often to check for replies (ms) |
 | `BRIDGE_PORT` | No | 3847 | Bridge server port |
 | `BRIDGE_URL` | No | http://localhost:3847 | Bridge server URL |
 
