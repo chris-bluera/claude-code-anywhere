@@ -4,6 +4,7 @@
  *
  * Uses Gmail SMTP/IMAP for sending/receiving messages.
  */
+import 'dotenv/config';
 import { Command } from 'commander';
 import { createBridgeServer } from './server/index.js';
 import { loadEmailConfig, loadAppConfig } from './shared/config.js';

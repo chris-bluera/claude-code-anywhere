@@ -64,6 +64,7 @@
   },
   "dependencies": {
     "commander": "^12.1.0",
+    "dotenv": "^17.2.3",
     "imapflow": "^1.2.4",
     "nodemailer": "^7.0.12"
   },

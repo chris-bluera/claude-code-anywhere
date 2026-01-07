@@ -4,5 +4,5 @@
  *
  * Uses Gmail SMTP/IMAP for sending/receiving messages.
  */
-export {};
+import 'dotenv/config';
 //# sourceMappingURL=cli.d.ts.map
