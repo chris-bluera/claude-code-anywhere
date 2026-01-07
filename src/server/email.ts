@@ -240,8 +240,8 @@ export class EmailClient {
           const parsed = this.parseEmail(subject, body);
           this.messageCallback(parsed);
 
-          // Mark as read
-          await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen']);
+          // Delete after processing to avoid re-processing on restart
+          await client.messageDelete({ uid: msg.uid });
         }
       } finally {
         lock.release();
