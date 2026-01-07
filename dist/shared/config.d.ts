@@ -1,11 +1,11 @@
 /**
  * Configuration loading from environment variables
  */
-import type { AppConfig, MessagesConfig, Result } from './types.js';
+import type { AppConfig, EmailConfig, Result } from './types.js';
 /**
- * Load Messages configuration from environment variables
+ * Load Email configuration from environment variables
  */
-export declare function loadMessagesConfig(): Result<MessagesConfig, string>;
+export declare function loadEmailConfig(): Result<EmailConfig, string>;
 /**
  * Load full application configuration
  */

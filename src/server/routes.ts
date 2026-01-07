@@ -1,12 +1,12 @@
 /**
- * HTTP API routes for the SMS bridge server
+ * HTTP API routes for the email bridge server
  */
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { ServerStatus, HookEvent } from '../shared/types.js';
 import { sessionManager } from './sessions.js';
 import { stateManager } from './state.js';
-import { MessagesClient } from './messages.js';
+import { EmailClient } from './email.js';
 
 const VALID_HOOK_EVENTS = new Set<string>(['Notification', 'Stop', 'PreToolUse', 'UserPromptSubmit']);
 
@@ -21,7 +21,7 @@ function isHookEvent(value: unknown): value is HookEvent {
  * Route handler context
  */
 export interface RouteContext {
-  messagesClient: MessagesClient;
+  emailClient: EmailClient;
   startTime: number;
 }
 
@@ -93,9 +93,9 @@ function sendError(res: ServerResponse, statusCode: number, error: string): void
 }
 
 /**
- * Handle POST /api/send - Send SMS for a hook event
+ * Handle POST /api/send - Send email for a hook event
  */
-export async function handleSendSMS(
+export async function handleSendEmail(
   req: IncomingMessage,
   res: ServerResponse,
   ctx: RouteContext
@@ -155,8 +155,8 @@ export async function handleSendSMS(
     return;
   }
 
-  // Send the SMS
-  const result = ctx.messagesClient.sendHookMessage(sessionId, event, message);
+  // Send the email
+  const result = await ctx.emailClient.sendHookMessage(sessionId, event, message);
 
   if (result.success) {
     sendJSON(res, 200, { sent: true, messageId: result.data });
@@ -221,8 +221,8 @@ export async function handleRegisterSession(
   // Register the session
   sessionManager.registerSession(sessionId, event, prompt);
 
-  // Send the SMS
-  const result = ctx.messagesClient.sendHookMessage(sessionId, event, prompt);
+  // Send the email
+  const result = await ctx.emailClient.sendHookMessage(sessionId, event, prompt);
 
   if (result.success) {
     sendJSON(res, 200, { registered: true, messageId: result.data });
@@ -323,7 +323,6 @@ export function handleStatus(_req: IncomingMessage, res: ServerResponse, ctx: Ro
     activeSessions: sessionManager.getSessionCount(),
     pendingResponses: sessionManager.getPendingResponseCount(),
     uptime: Math.floor((Date.now() - ctx.startTime) / 1000),
-    tunnelUrl: null, // No longer using tunnel
   };
   sendJSON(res, 200, status);
 }
@@ -333,13 +332,13 @@ export function handleStatus(_req: IncomingMessage, res: ServerResponse, ctx: Ro
  */
 export function handleRoot(_req: IncomingMessage, res: ServerResponse): void {
   sendJSON(res, 200, {
-    name: 'Claude Code SMS Bridge',
+    name: 'Claude Code Email Bridge',
     version: '0.1.0',
-    backend: 'macOS Messages (imsg)',
+    backend: 'Gmail SMTP/IMAP',
     endpoints: [
-      'POST /api/send - Send SMS for hook event',
+      'POST /api/send - Send email for hook event',
       'POST /api/session - Register session waiting for response',
-      'GET /api/response/:sessionId - Poll for SMS response',
+      'GET /api/response/:sessionId - Poll for email response',
       'POST /api/session/:id/enable - Enable session',
       'POST /api/session/:id/disable - Disable session',
       'GET /api/session/:id/enabled - Check if session enabled',

@@ -3,16 +3,22 @@ import {
   getStateDir,
   getStateFilePath,
   loadAppConfig,
-  loadMessagesConfig,
+  loadEmailConfig,
 } from '../src/shared/config.js';
 
 describe('config', () => {
-  describe('loadMessagesConfig', () => {
+  describe('loadEmailConfig', () => {
     let originalEnv: Record<string, string | undefined>;
 
     beforeEach(() => {
       originalEnv = {
-        SMS_USER_EMAIL: process.env['SMS_USER_EMAIL'],
+        EMAIL_USER: process.env['EMAIL_USER'],
+        EMAIL_PASS: process.env['EMAIL_PASS'],
+        EMAIL_RECIPIENT: process.env['EMAIL_RECIPIENT'],
+        SMTP_HOST: process.env['SMTP_HOST'],
+        SMTP_PORT: process.env['SMTP_PORT'],
+        IMAP_HOST: process.env['IMAP_HOST'],
+        IMAP_PORT: process.env['IMAP_PORT'],
       };
     });
 
@@ -26,43 +32,137 @@ describe('config', () => {
       }
     });
 
-    it('returns success when SMS_USER_EMAIL is set', () => {
-      process.env['SMS_USER_EMAIL'] = 'test@icloud.com';
+    it('returns success when all required env vars are set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
 
-      const result = loadMessagesConfig();
+      const result = loadEmailConfig();
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.userEmail).toBe('test@icloud.com');
+        expect(result.data.user).toBe('claude@gmail.com');
+        expect(result.data.pass).toBe('app-password-123');
+        expect(result.data.recipient).toBe('user@example.com');
       }
     });
 
-    it('returns error when SMS_USER_EMAIL is not set', () => {
-      delete process.env['SMS_USER_EMAIL'];
+    it('returns error when EMAIL_USER is not set', () => {
+      delete process.env['EMAIL_USER'];
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
 
-      const result = loadMessagesConfig();
+      const result = loadEmailConfig();
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toContain('SMS_USER_EMAIL');
+        expect(result.error).toContain('EMAIL_USER');
       }
     });
 
-    it('returns error when SMS_USER_EMAIL is empty', () => {
-      process.env['SMS_USER_EMAIL'] = '';
+    it('returns error when EMAIL_PASS is not set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      delete process.env['EMAIL_PASS'];
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
 
-      const result = loadMessagesConfig();
+      const result = loadEmailConfig();
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error).toContain('SMS_USER_EMAIL');
+        expect(result.error).toContain('EMAIL_PASS');
       }
     });
 
-    it('returns error when SMS_USER_EMAIL is not a valid email', () => {
-      process.env['SMS_USER_EMAIL'] = 'notanemail';
+    it('returns error when EMAIL_RECIPIENT is not set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      delete process.env['EMAIL_RECIPIENT'];
 
-      const result = loadMessagesConfig();
+      const result = loadEmailConfig();
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('EMAIL_RECIPIENT');
+      }
+    });
+
+    it('returns error when EMAIL_USER is not a valid email', () => {
+      process.env['EMAIL_USER'] = 'notanemail';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+
+      const result = loadEmailConfig();
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toContain('not a valid email');
+      }
+    });
+
+    it('returns error when EMAIL_RECIPIENT is not a valid email', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'notanemail';
+
+      const result = loadEmailConfig();
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('not a valid email');
+      }
+    });
+
+    it('uses default SMTP host and port when not set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      delete process.env['SMTP_HOST'];
+      delete process.env['SMTP_PORT'];
+
+      const result = loadEmailConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.smtpHost).toBe('smtp.gmail.com');
+        expect(result.data.smtpPort).toBe(587);
+      }
+    });
+
+    it('uses custom SMTP host and port when set', () => {
+      process.env['EMAIL_USER'] = 'claude@outlook.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      process.env['SMTP_HOST'] = 'smtp.office365.com';
+      process.env['SMTP_PORT'] = '465';
+
+      const result = loadEmailConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.smtpHost).toBe('smtp.office365.com');
+        expect(result.data.smtpPort).toBe(465);
+      }
+    });
+
+    it('uses default IMAP host and port when not set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      delete process.env['IMAP_HOST'];
+      delete process.env['IMAP_PORT'];
+
+      const result = loadEmailConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.imapHost).toBe('imap.gmail.com');
+        expect(result.data.imapPort).toBe(993);
+      }
+    });
+
+    it('uses custom IMAP host and port when set', () => {
+      process.env['EMAIL_USER'] = 'claude@outlook.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      process.env['IMAP_HOST'] = 'outlook.office365.com';
+      process.env['IMAP_PORT'] = '143';
+
+      const result = loadEmailConfig();
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.imapHost).toBe('outlook.office365.com');
+        expect(result.data.imapPort).toBe(143);
       }
     });
   });
@@ -72,9 +172,11 @@ describe('config', () => {
 
     beforeEach(() => {
       originalEnv = {
-        SMS_USER_EMAIL: process.env['SMS_USER_EMAIL'],
-        SMS_BRIDGE_PORT: process.env['SMS_BRIDGE_PORT'],
-        SMS_BRIDGE_URL: process.env['SMS_BRIDGE_URL'],
+        EMAIL_USER: process.env['EMAIL_USER'],
+        EMAIL_PASS: process.env['EMAIL_PASS'],
+        EMAIL_RECIPIENT: process.env['EMAIL_RECIPIENT'],
+        BRIDGE_PORT: process.env['BRIDGE_PORT'],
+        BRIDGE_URL: process.env['BRIDGE_URL'],
       };
     });
 
@@ -88,10 +190,12 @@ describe('config', () => {
       }
     });
 
-    it('uses custom port in default bridge URL when SMS_BRIDGE_PORT is set', () => {
-      process.env['SMS_USER_EMAIL'] = 'test@icloud.com';
-      process.env['SMS_BRIDGE_PORT'] = '4000';
-      delete process.env['SMS_BRIDGE_URL'];
+    it('uses custom port in default bridge URL when BRIDGE_PORT is set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      process.env['BRIDGE_PORT'] = '4000';
+      delete process.env['BRIDGE_URL'];
 
       const result = loadAppConfig();
       expect(result.success).toBe(true);
@@ -101,10 +205,12 @@ describe('config', () => {
       }
     });
 
-    it('uses default port 3847 in bridge URL when SMS_BRIDGE_PORT is not set', () => {
-      process.env['SMS_USER_EMAIL'] = 'test@icloud.com';
-      delete process.env['SMS_BRIDGE_PORT'];
-      delete process.env['SMS_BRIDGE_URL'];
+    it('uses default port 3847 in bridge URL when BRIDGE_PORT is not set', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      delete process.env['BRIDGE_PORT'];
+      delete process.env['BRIDGE_URL'];
 
       const result = loadAppConfig();
       expect(result.success).toBe(true);
@@ -114,10 +220,12 @@ describe('config', () => {
       }
     });
 
-    it('uses explicit SMS_BRIDGE_URL when provided', () => {
-      process.env['SMS_USER_EMAIL'] = 'test@icloud.com';
-      process.env['SMS_BRIDGE_PORT'] = '4000';
-      process.env['SMS_BRIDGE_URL'] = 'https://my-tunnel.example.com';
+    it('uses explicit BRIDGE_URL when provided', () => {
+      process.env['EMAIL_USER'] = 'claude@gmail.com';
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
+      process.env['BRIDGE_PORT'] = '4000';
+      process.env['BRIDGE_URL'] = 'https://my-tunnel.example.com';
 
       const result = loadAppConfig();
       expect(result.success).toBe(true);
@@ -126,8 +234,10 @@ describe('config', () => {
       }
     });
 
-    it('returns error when SMS_USER_EMAIL is missing', () => {
-      delete process.env['SMS_USER_EMAIL'];
+    it('returns error when EMAIL_USER is missing', () => {
+      delete process.env['EMAIL_USER'];
+      process.env['EMAIL_PASS'] = 'app-password-123';
+      process.env['EMAIL_RECIPIENT'] = 'user@example.com';
 
       const result = loadAppConfig();
       expect(result.success).toBe(false);

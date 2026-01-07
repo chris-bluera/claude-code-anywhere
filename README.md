@@ -3,9 +3,8 @@
 [![CI](https://github.com/chris-bluera/claude-sms/actions/workflows/ci.yml/badge.svg)](https://github.com/chris-bluera/claude-sms/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
-![macOS](https://img.shields.io/badge/macOS-only-blue)
 
-> **Stay connected to your Claude Code sessions from anywhere.** Get SMS notifications when tasks complete, approve operations remotely, and respond to prompts—all from your phone.
+> **Stay connected to your Claude Code sessions from anywhere.** Get email notifications when tasks complete, approve operations remotely, and respond to prompts from any device.
 
 ## Table of Contents
 
@@ -19,11 +18,9 @@
 - [Quick Reference](#-quick-reference)
 - [Usage](#-usage)
 - [How It Works](#-how-it-works)
-- [SMS Format](#-sms-format)
+- [Email Format](#-email-format)
 - [Hook Events](#-hook-events)
 - [Configuration](#-configuration)
-- [Why macOS Messages?](#why-macos-messages-instead-of-twiliotelnyx)
-- [Known Limitations](#known-limitations)
 - [Security](#-security)
 - [Troubleshooting](#-troubleshooting)
 - [Development](#-development)
@@ -37,52 +34,50 @@
 
 ## Why Claude SMS?
 
-When Claude Code needs your input—a question, approval, or notification—you shouldn't have to be tethered to your terminal.
+When Claude Code needs your input--a question, approval, or notification--you shouldn't have to be tethered to your terminal.
 
 | Scenario | Without Claude SMS | With Claude SMS |
 |----------|-------------------|-----------------|
-| Task completes | Sit and wait, or miss it | Get SMS: "Task completed!" |
-| Claude asks a question | Session blocks until you notice | Get SMS, reply from anywhere |
-| Destructive operation | Must be at terminal to approve | Approve via text: "Y" |
+| Task completes | Sit and wait, or miss it | Get email: "Task completed!" |
+| Claude asks a question | Session blocks until you notice | Get email, reply from anywhere |
+| Destructive operation | Must be at terminal to approve | Approve via email: "Y" |
 | Long-running task | Keep checking back | Do other things, get notified |
 
-**The result:** Run background tasks with confidence. Walk away. Your phone keeps you connected.
+**The result:** Run background tasks with confidence. Walk away. Your inbox keeps you connected.
 
 ---
 
 ## Features
 
-- **SMS Notifications** — Get SMS alerts when tasks complete or errors occur
-- **Interactive Prompts** — Respond to Claude's questions via text
-- **Approval Requests** — Approve or deny destructive operations remotely
-- **Multi-Session** — Track multiple Claude Code sessions independently
-- **Easy Toggle** — Enable/disable SMS with `/sms on` or `/sms off`
-- **No Third-Party Services** — Uses macOS Messages.app directly
-- **Free** — No SMS provider costs, no carrier registration
+- **Email Notifications** -- Get alerts when tasks complete or errors occur
+- **Interactive Prompts** -- Respond to Claude's questions via email reply
+- **Approval Requests** -- Approve or deny destructive operations remotely
+- **Multi-Session** -- Track multiple Claude Code sessions independently
+- **Easy Toggle** -- Enable/disable with `/sms on` or `/sms off`
+- **Cross-Platform** -- Works on any OS with Node.js
+- **Provider Flexible** -- Gmail by default, configurable SMTP/IMAP
 
 ---
 
 ## Requirements
 
-- **macOS only** — Uses native Messages.app
-- **iPhone** — Signed into the same Apple ID
 - **Node.js 18+**
-- **imsg CLI tool** — `brew install steipete/tap/imsg`
-- **Full Disk Access** — Required for reading incoming messages
+- **Email account with SMTP/IMAP access** (Gmail recommended)
+- **App password** (for Gmail: 16-character app-specific password)
 
 ---
 
 ## Quick Start
 
-### 1. Install Prerequisites
+### 1. Create Email Account for Claude
 
-```bash
-# Install imsg CLI
-brew install steipete/tap/imsg
+Set up a dedicated email account for Claude notifications (e.g., `claude-notify@gmail.com`).
 
-# Grant Full Disk Access to your terminal app
-# System Settings > Privacy & Security > Full Disk Access > Add Terminal/iTerm/VS Code
-```
+For Gmail:
+1. Enable 2-Factor Authentication on the account
+2. Go to [Google App Passwords](https://myaccount.google.com/apppasswords)
+3. Create a new app password (select "Mail" and your device)
+4. Copy the 16-character password (no spaces)
 
 ### 2. Install the Plugin
 
@@ -90,13 +85,16 @@ brew install steipete/tap/imsg
 claude /plugin add github.com/chris-bluera/claude-sms
 ```
 
-### 3. Set Environment Variable
+### 3. Set Environment Variables
 
 ```bash
-export SMS_USER_EMAIL=your@icloud.com  # Your Apple ID email
+# Required
+export EMAIL_USER=claude-notify@gmail.com   # Claude's email account
+export EMAIL_PASS=xxxx-xxxx-xxxx-xxxx       # App password (no spaces)
+export EMAIL_RECIPIENT=you@example.com      # Your email to receive notifications
 ```
 
-Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) for persistence.
+Add these to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) for persistence.
 
 ### 4. Start the Bridge Server
 
@@ -123,12 +121,12 @@ Or in Claude Code:
 
 | Command | Description |
 |---------|-------------|
-| `/sms on` | Enable SMS for current session |
-| `/sms on --all` | Enable SMS globally |
-| `/sms off` | Disable SMS for current session |
-| `/sms off --all` | Disable SMS globally |
+| `/sms on` | Enable notifications for current session |
+| `/sms on --all` | Enable notifications globally |
+| `/sms off` | Disable notifications for current session |
+| `/sms off --all` | Disable notifications globally |
 | `/sms status` | Show current status |
-| `/sms-test` | Send a test SMS |
+| `/sms-test` | Send a test email |
 
 ### CLI Commands
 
@@ -136,16 +134,16 @@ Or in Claude Code:
 |---------|-------------|
 | `npx claude-sms server` | Start bridge server |
 | `npx claude-sms status` | Check server status |
-| `npx claude-sms enable` | Enable SMS globally |
-| `npx claude-sms disable` | Disable SMS globally |
-| `npx claude-sms test` | Send test SMS |
+| `npx claude-sms enable` | Enable notifications globally |
+| `npx claude-sms disable` | Disable notifications globally |
+| `npx claude-sms test` | Send test email |
 | `npx claude-sms config` | Show configuration |
 
 ---
 
 ## Usage
 
-### Enabling/Disabling SMS
+### Enabling/Disabling Notifications
 
 ```bash
 # In Claude Code
@@ -168,51 +166,47 @@ npx claude-sms status   # Check server and settings
 ## How It Works
 
 ```
-┌─────────────────┐    Hook     ┌─────────────────┐    SMS     ┌──────────┐
-│  Claude Code    │───triggered─▶│  Bridge Server  │───────────▶│  Phone   │
-│                 │             │    (imsg CLI)   │            │          │
-│                 │◀──response──│                 │◀───reply───│          │
-└─────────────────┘             └─────────────────┘            └──────────┘
++-----------------+    Hook     +-----------------+   Email    +----------+
+|  Claude Code    |--triggered->|  Bridge Server  |----------->|  Inbox   |
+|                 |             |   (SMTP/IMAP)   |            |          |
+|                 |<--response--|                 |<---reply---|          |
++-----------------+             +-----------------+            +----------+
 ```
 
 1. Claude Code triggers a hook (notification, tool use, etc.)
 2. Hook sends message to bridge server
-3. Bridge server sends SMS via macOS Messages.app
-4. User replies via SMS
-5. Bridge server reads reply from Messages.app
+3. Bridge server sends email via SMTP
+4. User replies to the email
+5. Bridge server reads reply via IMAP polling
 6. Hook retrieves response and returns it to Claude Code
 
 ---
 
-## SMS Format
+## Email Format
 
 ### Outbound
 
+Subject line includes session ID for threading:
 ```
-[CC-abc123] ⚠️ Approve tool use?
+[CC-abc123] Approve tool use?
+```
 
+Body:
+```
 Tool: Bash - Approve? (Y/N)
 
-Reply with your response
+Reply to this email with your response.
 ```
 
 ### Inbound
 
-Simple reply (single active session):
-```
-Yes
-```
-
-With session ID (multiple sessions):
-```
-[CC-abc123] Yes
-```
+Simply reply to the email. The session ID is extracted from the subject line automatically.
 
 ---
 
 ## Hook Events
 
-| Event | Trigger | SMS Sent |
+| Event | Trigger | Email Sent |
 |-------|---------|----------|
 | `Notification` | Status updates, completions | Yes (by default) |
 | `Stop` | Session ends | Yes (by default) |
@@ -224,11 +218,37 @@ With session ID (multiple sessions):
 
 ### Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SMS_USER_EMAIL` | Yes | Your Apple ID email (e.g., `you@icloud.com`) |
-| `SMS_BRIDGE_URL` | No | Bridge server URL (default: localhost:3847) |
-| `SMS_BRIDGE_PORT` | No | Server port (default: 3847) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `EMAIL_USER` | Yes | - | Email address for Claude (sending account) |
+| `EMAIL_PASS` | Yes | - | Email app password |
+| `EMAIL_RECIPIENT` | Yes | - | Your email to receive notifications |
+| `SMTP_HOST` | No | smtp.gmail.com | SMTP server hostname |
+| `SMTP_PORT` | No | 587 | SMTP server port |
+| `IMAP_HOST` | No | imap.gmail.com | IMAP server hostname |
+| `IMAP_PORT` | No | 993 | IMAP server port |
+| `BRIDGE_PORT` | No | 3847 | Bridge server port |
+| `BRIDGE_URL` | No | http://localhost:3847 | Bridge server URL |
+
+### Non-Gmail Providers
+
+For other email providers, configure the SMTP/IMAP settings:
+
+**Outlook/Office 365:**
+```bash
+export SMTP_HOST=smtp.office365.com
+export SMTP_PORT=587
+export IMAP_HOST=outlook.office365.com
+export IMAP_PORT=993
+```
+
+**Yahoo:**
+```bash
+export SMTP_HOST=smtp.mail.yahoo.com
+export SMTP_PORT=465
+export IMAP_HOST=imap.mail.yahoo.com
+export IMAP_PORT=993
+```
 
 ### State File
 
@@ -248,103 +268,57 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 
 ---
 
-## Why macOS Messages Instead of Twilio/Telnyx?
-
-We considered cloud SMS providers (Twilio, Telnyx) but chose native macOS Messages.app with iMessage for several reasons:
-
-| Consideration | Cloud Providers (Twilio/Telnyx) | macOS iMessage |
-|--------------|--------------------------------|----------------|
-| **Cost** | $0.01-0.05 per SMS | Free |
-| **Carrier Registration** | 10DLC registration required (~$15/mo + weeks of approval) | None |
-| **Toll-Free Verification** | 3-5 business days, compliance paperwork | None |
-| **Data Privacy** | Messages routed through third-party servers | All local (end-to-end encrypted) |
-| **Setup Complexity** | API keys, webhooks, tunneling | Just `brew install` |
-| **Platform Support** | Any platform | macOS only |
-
-**The trade-off:** This only works on macOS with iMessage. If you need cross-platform support, consider contributing a Twilio/Telnyx backend.
-
----
-
-## Known Limitations
-
-<details>
-<summary><b>macOS Only</b></summary>
-
-This tool requires:
-- macOS with Messages.app
-- Both Mac and iPhone signed into the same Apple ID
-
-If you need cross-platform support, consider implementing a cloud SMS backend (PRs welcome!).
-</details>
-
-<details>
-<summary><b>iMessage Required</b></summary>
-
-Messages are sent via iMessage to your Apple ID email, not SMS. This means:
-- Requires internet connectivity on both devices
-- Your Apple ID must be set up for iMessage
-
-This approach avoids SMS carrier fees and eliminates duplicate message issues that occur when texting your own phone number.
-</details>
-
----
-
 ## Security
 
-- **Local Only** — Messages never leave your Mac (no third-party services)
-- **Email Verification** — Only responds to your configured Apple ID
-- **Session IDs** — Prevent cross-session interference
-- **Timeout** — Sessions expire after 30 minutes of inactivity
-- **No Secrets** — Never sends credentials/secrets via SMS
+- **App Passwords** -- Never use your main email password; use app-specific passwords
+- **Dedicated Account** -- Use a separate email account for Claude notifications
+- **Email Verification** -- Only responds to emails from your configured recipient
+- **Session IDs** -- Prevent cross-session interference
+- **Timeout** -- Sessions expire after 30 minutes of inactivity
+- **No Secrets** -- Never sends credentials/secrets via email
 
 ---
 
 ## Troubleshooting
 
 <details>
-<summary><b>Message Not Sending</b></summary>
+<summary><b>Email Not Sending</b></summary>
 
-1. Check imsg is installed: `which imsg`
-2. Verify environment variable: `echo $SMS_USER_EMAIL`
-3. Ensure Messages.app is set up with your Apple ID
-4. Test manually: `imsg send --to "you@icloud.com" --text "test" --service imessage`
+1. Verify environment variables are set:
+   ```bash
+   echo $EMAIL_USER
+   echo $EMAIL_PASS
+   echo $EMAIL_RECIPIENT
+   ```
+2. Check that you're using an app password, not your main password
+3. For Gmail, ensure 2FA is enabled and app password is correct
+4. Check server logs for SMTP errors
 </details>
 
 <details>
 <summary><b>Response Not Received</b></summary>
 
-1. Grant Full Disk Access to your terminal app in System Settings
-2. Restart your terminal after granting access
-3. Check server logs for errors
-4. Verify the chat exists in Messages.app
+1. Check server logs for IMAP polling errors
+2. Verify the reply was sent from the correct email address (EMAIL_RECIPIENT)
+3. Make sure the subject line contains the session ID `[CC-xxxxx]`
+4. Check spam folder for the original notification
 </details>
 
 <details>
 <summary><b>Server Not Starting</b></summary>
 
 1. Check if port 3847 is in use: `lsof -i :3847`
-2. Verify SMS_USER_EMAIL is set
+2. Verify all required environment variables are set
 3. Try a different port: `npx claude-sms server -p 3848`
 </details>
 
 <details>
-<summary><b>imsg Not Found</b></summary>
+<summary><b>Gmail "Less Secure Apps" Error</b></summary>
 
-Install via Homebrew:
-```bash
-brew install steipete/tap/imsg
-```
-</details>
-
-<details>
-<summary><b>Full Disk Access Required</b></summary>
-
-The imsg tool needs Full Disk Access to read the Messages database:
-
-1. Open System Settings > Privacy & Security > Full Disk Access
-2. Click the + button
-3. Add your terminal app (Terminal, iTerm2, VS Code, etc.)
-4. Restart your terminal
+Gmail no longer supports "less secure apps." You must:
+1. Enable 2-Factor Authentication
+2. Create an app-specific password at https://myaccount.google.com/apppasswords
+3. Use the 16-character app password (without spaces)
 </details>
 
 ---
@@ -410,7 +384,7 @@ Contributions welcome! Please:
 
 ## License
 
-MIT — See [LICENSE](./LICENSE) for details.
+MIT -- See [LICENSE](./LICENSE) for details.
 
 ---
 

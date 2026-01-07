@@ -1,13 +1,13 @@
 /**
- * HTTP API routes for the SMS bridge server
+ * HTTP API routes for the email bridge server
  */
 import type { IncomingMessage, ServerResponse } from 'http';
-import { MessagesClient } from './messages.js';
+import { EmailClient } from './email.js';
 /**
  * Route handler context
  */
 export interface RouteContext {
-    messagesClient: MessagesClient;
+    emailClient: EmailClient;
     startTime: number;
 }
 /** Maximum request body size (1MB) */
@@ -22,9 +22,9 @@ export declare function parseJSON(body: string): unknown;
  */
 export declare function readBody(req: IncomingMessage): Promise<string>;
 /**
- * Handle POST /api/send - Send SMS for a hook event
+ * Handle POST /api/send - Send email for a hook event
  */
-export declare function handleSendSMS(req: IncomingMessage, res: ServerResponse, ctx: RouteContext): Promise<void>;
+export declare function handleSendEmail(req: IncomingMessage, res: ServerResponse, ctx: RouteContext): Promise<void>;
 /**
  * Handle POST /api/session - Register session waiting for response
  */

@@ -1,12 +1,12 @@
 /**
- * Claude SMS - SMS notifications and bidirectional communication for Claude Code
+ * Claude SMS - Email notifications and bidirectional communication for Claude Code
  *
- * Uses macOS Messages.app via imsg CLI for sending/receiving messages.
+ * Uses Gmail SMTP/IMAP for sending/receiving messages.
  */
-export type { HookEvent, Session, PendingResponse, SMSResponse, GlobalState, ServerStatus, MessagesConfig, AppConfig, Result, SendSMSRequest, RegisterSessionRequest, ParsedSMS, } from './shared/types.js';
-export { loadMessagesConfig, loadAppConfig, getStateDir, getStateFilePath } from './shared/config.js';
+export type { HookEvent, Session, PendingResponse, EmailResponse, GlobalState, ServerStatus, EmailConfig, AppConfig, Result, SendEmailRequest, RegisterSessionRequest, ParsedSMS, } from './shared/types.js';
+export { loadEmailConfig, loadAppConfig, getStateDir, getStateFilePath } from './shared/config.js';
 export { createBridgeServer, BridgeServer } from './server/index.js';
 export { sessionManager } from './server/sessions.js';
 export { stateManager, loadState, saveState, enableGlobal, disableGlobal } from './server/state.js';
-export { MessagesClient, formatMessage, checkImsgInstalled } from './server/messages.js';
+export { EmailClient, formatSubject, formatBody } from './server/email.js';
 //# sourceMappingURL=index.d.ts.map

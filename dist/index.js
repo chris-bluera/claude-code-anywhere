@@ -1,13 +1,13 @@
 /**
- * Claude SMS - SMS notifications and bidirectional communication for Claude Code
+ * Claude SMS - Email notifications and bidirectional communication for Claude Code
  *
- * Uses macOS Messages.app via imsg CLI for sending/receiving messages.
+ * Uses Gmail SMTP/IMAP for sending/receiving messages.
  */
 // Re-export config utilities
-export { loadMessagesConfig, loadAppConfig, getStateDir, getStateFilePath } from './shared/config.js';
+export { loadEmailConfig, loadAppConfig, getStateDir, getStateFilePath } from './shared/config.js';
 // Re-export server components
 export { createBridgeServer, BridgeServer } from './server/index.js';
 export { sessionManager } from './server/sessions.js';
 export { stateManager, loadState, saveState, enableGlobal, disableGlobal } from './server/state.js';
-export { MessagesClient, formatMessage, checkImsgInstalled } from './server/messages.js';
+export { EmailClient, formatSubject, formatBody } from './server/email.js';
 //# sourceMappingURL=index.js.map

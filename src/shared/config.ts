@@ -2,35 +2,105 @@
  * Configuration loading from environment variables
  */
 
-import type { AppConfig, MessagesConfig, Result } from './types.js';
-
-const DEFAULT_PORT = 3847;
+import type { AppConfig, EmailConfig, Result } from './types.js';
+import {
+  DEFAULT_BRIDGE_PORT,
+  DEFAULT_SMTP_HOST,
+  DEFAULT_SMTP_PORT,
+  DEFAULT_IMAP_HOST,
+  DEFAULT_IMAP_PORT,
+} from './constants.js';
 
 /**
- * Load Messages configuration from environment variables
+ * Validate email format
  */
-export function loadMessagesConfig(): Result<MessagesConfig, string> {
-  const userEmail = process.env['SMS_USER_EMAIL'];
+function isValidEmail(email: string): boolean {
+  return email.includes('@') && email.includes('.');
+}
 
-  if (userEmail === undefined || userEmail === '') {
+/**
+ * Load Email configuration from environment variables
+ */
+export function loadEmailConfig(): Result<EmailConfig, string> {
+  const user = process.env['EMAIL_USER'];
+  const pass = process.env['EMAIL_PASS'];
+  const recipient = process.env['EMAIL_RECIPIENT'];
+
+  if (user === undefined || user === '') {
     return {
       success: false,
-      error: 'Missing required environment variable: SMS_USER_EMAIL (your Apple ID email)',
+      error: 'Missing required environment variable: EMAIL_USER (Gmail address for Claude)',
     };
   }
 
-  // Basic email validation
-  if (!userEmail.includes('@') || !userEmail.includes('.')) {
+  if (!isValidEmail(user)) {
     return {
       success: false,
-      error: `Invalid SMS_USER_EMAIL: "${userEmail}" is not a valid email address`,
+      error: `Invalid EMAIL_USER: "${user}" is not a valid email address`,
+    };
+  }
+
+  if (pass === undefined || pass === '') {
+    return {
+      success: false,
+      error: 'Missing required environment variable: EMAIL_PASS (Gmail app password)',
+    };
+  }
+
+  if (recipient === undefined || recipient === '') {
+    return {
+      success: false,
+      error: 'Missing required environment variable: EMAIL_RECIPIENT (your email address)',
+    };
+  }
+
+  if (!isValidEmail(recipient)) {
+    return {
+      success: false,
+      error: `Invalid EMAIL_RECIPIENT: "${recipient}" is not a valid email address`,
+    };
+  }
+
+  // SMTP settings with defaults
+  const smtpHostEnv = process.env['SMTP_HOST'];
+  const smtpHost = smtpHostEnv !== undefined && smtpHostEnv !== '' ? smtpHostEnv : DEFAULT_SMTP_HOST;
+
+  const smtpPortEnv = process.env['SMTP_PORT'];
+  const smtpPort =
+    smtpPortEnv !== undefined && smtpPortEnv !== '' ? parseInt(smtpPortEnv, 10) : DEFAULT_SMTP_PORT;
+
+  if (isNaN(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+    return {
+      success: false,
+      error: `Invalid SMTP_PORT: ${smtpPortEnv ?? 'undefined'}`,
+    };
+  }
+
+  // IMAP settings with defaults
+  const imapHostEnv = process.env['IMAP_HOST'];
+  const imapHost = imapHostEnv !== undefined && imapHostEnv !== '' ? imapHostEnv : DEFAULT_IMAP_HOST;
+
+  const imapPortEnv = process.env['IMAP_PORT'];
+  const imapPort =
+    imapPortEnv !== undefined && imapPortEnv !== '' ? parseInt(imapPortEnv, 10) : DEFAULT_IMAP_PORT;
+
+  if (isNaN(imapPort) || imapPort < 1 || imapPort > 65535) {
+    return {
+      success: false,
+      error: `Invalid IMAP_PORT: ${imapPortEnv ?? 'undefined'}`,
     };
   }
 
   return {
     success: true,
     data: {
-      userEmail,
+      user,
+      pass,
+      recipient,
+      smtpHost,
+      smtpPort,
+      imapHost,
+      imapPort,
     },
   };
 }
@@ -39,28 +109,29 @@ export function loadMessagesConfig(): Result<MessagesConfig, string> {
  * Load full application configuration
  */
 export function loadAppConfig(): Result<AppConfig, string> {
-  const messagesResult = loadMessagesConfig();
+  const emailResult = loadEmailConfig();
 
-  if (!messagesResult.success) {
-    return messagesResult;
+  if (!emailResult.success) {
+    return emailResult;
   }
 
-  const portEnv = process.env['SMS_BRIDGE_PORT'];
-  const port = portEnv !== undefined && portEnv !== '' ? parseInt(portEnv, 10) : DEFAULT_PORT;
+  const portEnv = process.env['BRIDGE_PORT'];
+  const port =
+    portEnv !== undefined && portEnv !== '' ? parseInt(portEnv, 10) : DEFAULT_BRIDGE_PORT;
 
   if (isNaN(port) || port < 1 || port > 65535) {
     return {
       success: false,
-      error: `Invalid SMS_BRIDGE_PORT: ${portEnv ?? 'undefined'}`,
+      error: `Invalid BRIDGE_PORT: ${portEnv ?? 'undefined'}`,
     };
   }
 
-  const bridgeUrl = process.env['SMS_BRIDGE_URL'] ?? `http://localhost:${String(port)}`;
+  const bridgeUrl = process.env['BRIDGE_URL'] ?? `http://localhost:${String(port)}`;
 
   return {
     success: true,
     data: {
-      messages: messagesResult.data,
+      email: emailResult.data,
       bridgeUrl,
       port,
     },

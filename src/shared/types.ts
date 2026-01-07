@@ -19,7 +19,7 @@ export interface Session {
 }
 
 /**
- * A pending response waiting for SMS reply
+ * A pending response waiting for email reply
  */
 export interface PendingResponse {
   event: HookEvent;
@@ -28,9 +28,9 @@ export interface PendingResponse {
 }
 
 /**
- * Response received from SMS
+ * Response received from email
  */
-export interface SMSResponse {
+export interface EmailResponse {
   sessionId: string;
   response: string;
   from: string;
@@ -53,21 +53,26 @@ export interface ServerStatus {
   activeSessions: number;
   pendingResponses: number;
   uptime: number;
-  tunnelUrl: string | null;
 }
 
 /**
- * macOS Messages configuration
+ * Email configuration
  */
-export interface MessagesConfig {
-  userEmail: string;
+export interface EmailConfig {
+  user: string;
+  pass: string;
+  recipient: string;
+  smtpHost: string;
+  smtpPort: number;
+  imapHost: string;
+  imapPort: number;
 }
 
 /**
  * Application configuration
  */
 export interface AppConfig {
-  messages: MessagesConfig;
+  email: EmailConfig;
   bridgeUrl: string;
   port: number;
 }
@@ -78,9 +83,9 @@ export interface AppConfig {
 export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
 /**
- * API request for sending SMS
+ * API request for sending email notification
  */
-export interface SendSMSRequest {
+export interface SendEmailRequest {
   sessionId: string;
   event: HookEvent;
   message: string;
@@ -95,9 +100,8 @@ export interface RegisterSessionRequest {
   prompt: string;
 }
 
-
 /**
- * Parsed SMS message with optional session ID
+ * Parsed email message with optional session ID
  */
 export interface ParsedSMS {
   sessionId: string | null;

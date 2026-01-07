@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Claude SMS CLI - Command line interface for the SMS bridge
+ * Claude SMS CLI - Command line interface for the email bridge
  *
- * Uses macOS Messages.app via imsg CLI for sending/receiving messages.
+ * Uses Gmail SMTP/IMAP for sending/receiving messages.
  */
 import { Command } from 'commander';
 import { createBridgeServer } from './server/index.js';
-import { loadMessagesConfig, loadAppConfig } from './shared/config.js';
+import { loadEmailConfig, loadAppConfig } from './shared/config.js';
 import { enableGlobal, disableGlobal, loadState } from './server/state.js';
-import { MessagesClient, checkImsgInstalled } from './server/messages.js';
+import { EmailClient } from './server/email.js';
 const program = new Command();
 /**
  * Type guard for status response
@@ -24,20 +24,18 @@ function isStatusResponse(value) {
         return false;
     if (!('uptime' in value) || typeof value.uptime !== 'number')
         return false;
-    if (!('tunnelUrl' in value))
-        return false;
     return true;
 }
 program
     .name('claude-sms')
-    .description('SMS notifications and bidirectional communication for Claude Code via macOS Messages')
+    .description('Email notifications and bidirectional communication for Claude Code')
     .version('0.1.0');
 /**
- * Server command - Start the SMS bridge server
+ * Server command - Start the email bridge server
  */
 program
     .command('server')
-    .description('Start the SMS bridge server using macOS Messages')
+    .description('Start the email bridge server')
     .option('-p, --port <port>', 'Port to listen on', '3847')
     .action(async (options) => {
     const port = parseInt(options.port, 10);
@@ -45,19 +43,14 @@ program
         console.error('Error: Invalid port number');
         process.exit(1);
     }
-    // Check imsg is installed
-    if (!checkImsgInstalled()) {
-        console.error('Error: imsg is not installed');
-        console.error('\nInstall it with:');
-        console.error('  brew install steipete/tap/imsg');
-        process.exit(1);
-    }
     // Validate config
-    const configResult = loadMessagesConfig();
+    const configResult = loadEmailConfig();
     if (!configResult.success) {
         console.error(`Error: ${configResult.error}`);
-        console.error('\nPlease set the following environment variable:');
-        console.error('  SMS_USER_EMAIL=your@icloud.com');
+        console.error('\nPlease set the following environment variables:');
+        console.error('  EMAIL_USER=claude-notify@gmail.com');
+        console.error('  EMAIL_PASS=your-app-password');
+        console.error('  EMAIL_RECIPIENT=you@example.com');
         process.exit(1);
     }
     try {
@@ -86,7 +79,7 @@ program
  */
 program
     .command('status')
-    .description('Check SMS bridge server status')
+    .description('Check email bridge server status')
     .option('-u, --url <url>', 'Bridge server URL', 'http://localhost:3847')
     .action(async (options) => {
     try {
@@ -100,9 +93,9 @@ program
             console.error('Error: Invalid response from server');
             process.exit(1);
         }
-        console.log('SMS Bridge Server Status:');
+        console.log('Email Bridge Server Status:');
         console.log(`  Status: ${rawStatus.status}`);
-        console.log(`  Backend: macOS Messages (imsg)`);
+        console.log(`  Backend: Gmail SMTP/IMAP`);
         console.log(`  Active Sessions: ${String(rawStatus.activeSessions)}`);
         console.log(`  Pending Responses: ${String(rawStatus.pendingResponses)}`);
         console.log(`  Uptime: ${String(rawStatus.uptime)} seconds`);
@@ -113,15 +106,15 @@ program
     }
 });
 /**
- * Enable command - Enable SMS globally
+ * Enable command - Enable notifications globally
  */
 program
     .command('enable')
-    .description('Enable SMS notifications globally')
+    .description('Enable email notifications globally')
     .action(() => {
     try {
         enableGlobal();
-        console.log('SMS notifications enabled globally');
+        console.log('Email notifications enabled globally');
     }
     catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -130,15 +123,15 @@ program
     }
 });
 /**
- * Disable command - Disable SMS globally
+ * Disable command - Disable notifications globally
  */
 program
     .command('disable')
-    .description('Disable SMS notifications globally')
+    .description('Disable email notifications globally')
     .action(() => {
     try {
         disableGlobal();
-        console.log('SMS notifications disabled globally');
+        console.log('Email notifications disabled globally');
     }
     catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -147,41 +140,36 @@ program
     }
 });
 /**
- * Test command - Send a test SMS
+ * Test command - Send a test email
  */
 program
     .command('test')
-    .description('Send a test SMS message via macOS Messages')
-    .action(() => {
-    // Check imsg is installed
-    if (!checkImsgInstalled()) {
-        console.error('Error: imsg is not installed');
-        console.error('\nInstall it with:');
-        console.error('  brew install steipete/tap/imsg');
-        process.exit(1);
-    }
-    const configResult = loadMessagesConfig();
+    .description('Send a test email')
+    .action(async () => {
+    const configResult = loadEmailConfig();
     if (!configResult.success) {
         console.error(`Error: ${configResult.error}`);
         process.exit(1);
     }
-    const { userEmail } = configResult.data;
-    console.log(`Sending test iMessage to ${userEmail} via Messages.app...`);
+    const { recipient } = configResult.data;
+    console.log(`Sending test email to ${recipient}...`);
     try {
-        const client = new MessagesClient(configResult.data);
+        const client = new EmailClient(configResult.data);
         const initResult = client.initialize();
         if (!initResult.success) {
             console.error(`Error initializing: ${initResult.error}`);
             process.exit(1);
         }
-        const result = client.sendMessage('Test message from Claude SMS Bridge. Your setup is working!');
+        const result = await client.sendEmail('Test from Claude Code', 'Test message from Claude Code Email Bridge. Your setup is working!\n\nYou can reply to this email to test bidirectional communication.');
         if (result.success) {
-            console.log('Test SMS sent successfully via Messages.app');
+            console.log('Test email sent successfully!');
+            console.log(`  Message ID: ${result.data}`);
         }
         else {
             console.error(`Error: ${result.error}`);
             process.exit(1);
         }
+        client.dispose();
     }
     catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -198,11 +186,9 @@ program
     .action(() => {
     const state = loadState();
     const configResult = loadAppConfig();
-    const imsgInstalled = checkImsgInstalled();
-    console.log('Claude SMS Configuration:');
+    console.log('Claude Code Email Bridge Configuration:');
     console.log('');
-    console.log('Backend: macOS Messages (imsg)');
-    console.log(`  imsg installed: ${imsgInstalled ? 'Yes' : 'No'}`);
+    console.log('Backend: Gmail SMTP/IMAP');
     console.log('');
     console.log('Global State:');
     console.log(`  Enabled: ${state.enabled ? 'Yes' : 'No'}`);
@@ -214,13 +200,14 @@ program
     console.log(`  UserPromptSubmit: ${state.hooks.UserPromptSubmit ? 'On' : 'Off'}`);
     console.log('');
     if (configResult.success) {
-        console.log('Messages Configuration:');
-        console.log(`  User Email: ${configResult.data.messages.userEmail}`);
+        console.log('Email Configuration:');
+        console.log(`  From: ${configResult.data.email.user}`);
+        console.log(`  To: ${configResult.data.email.recipient}`);
         console.log(`  Bridge URL: ${configResult.data.bridgeUrl}`);
         console.log(`  Port: ${String(configResult.data.port)}`);
     }
     else {
-        console.log('Messages Configuration:');
+        console.log('Email Configuration:');
         console.log(`  Error: ${configResult.error}`);
     }
 });

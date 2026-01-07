@@ -1,0 +1,269 @@
+/**
+ * Email client for sending and receiving messages via SMTP/IMAP
+ *
+ * Replaces the macOS Messages.app integration with traditional email.
+ * Uses Gmail by default (smtp.gmail.com / imap.gmail.com).
+ */
+import nodemailer from 'nodemailer';
+import { ImapFlow } from 'imapflow';
+import { EMAIL_POLL_INTERVAL_MS, MAX_EMAIL_BODY_LENGTH } from '../shared/constants.js';
+/**
+ * Format an email subject with session ID prefix
+ */
+export function formatSubject(sessionId, event) {
+    const emoji = getEventEmoji(event);
+    const header = getEventHeader(event);
+    return `[CC-${sessionId}] ${emoji} ${header}`;
+}
+/**
+ * Format the email body
+ */
+export function formatBody(message) {
+    if (message.length > MAX_EMAIL_BODY_LENGTH) {
+        return `${message.substring(0, MAX_EMAIL_BODY_LENGTH - 3)}...\n\nReply to this email with your response.`;
+    }
+    return `${message}\n\nReply to this email with your response.`;
+}
+function getEventEmoji(event) {
+    switch (event) {
+        case 'Notification':
+            return '📢';
+        case 'Stop':
+            return '✅';
+        case 'PreToolUse':
+            return '⚠️';
+        case 'UserPromptSubmit':
+            return '🤖';
+        default:
+            return '💬';
+    }
+}
+function getEventHeader(event) {
+    switch (event) {
+        case 'Notification':
+            return 'Notification';
+        case 'Stop':
+            return 'Session ended';
+        case 'PreToolUse':
+            return 'Approve tool use?';
+        case 'UserPromptSubmit':
+            return 'Claude needs input';
+        default:
+            return 'Message';
+    }
+}
+/**
+ * Email client for sending and receiving messages
+ */
+export class EmailClient {
+    config;
+    transporter = null;
+    messageCallback = null;
+    pollInterval = null;
+    processedMessageIds = new Set();
+    constructor(config) {
+        this.config = config;
+    }
+    /**
+     * Initialize the email client - set up SMTP transporter
+     */
+    initialize() {
+        try {
+            this.transporter = nodemailer.createTransport({
+                host: this.config.smtpHost,
+                port: this.config.smtpPort,
+                secure: this.config.smtpPort === 465,
+                auth: {
+                    user: this.config.user,
+                    pass: this.config.pass,
+                },
+            });
+            console.log(`[email] Initialized SMTP transport for ${this.config.user}`);
+            return { success: true, data: undefined };
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            return {
+                success: false,
+                error: `Failed to initialize email client: ${message}`,
+            };
+        }
+    }
+    /**
+     * Send an email
+     */
+    async sendEmail(subject, body) {
+        if (this.transporter === null) {
+            return { success: false, error: 'Email client not initialized' };
+        }
+        try {
+            const info = await this.transporter.sendMail({
+                from: this.config.user,
+                to: this.config.recipient,
+                subject,
+                text: body,
+            });
+            console.log(`[email] Sent: "${subject}" to ${this.config.recipient}`);
+            return { success: true, data: info.messageId };
+        }
+        catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            return { success: false, error: `Failed to send email: ${errorMsg}` };
+        }
+    }
+    /**
+     * Send a formatted email for a hook event
+     */
+    async sendHookMessage(sessionId, event, message) {
+        const subject = formatSubject(sessionId, event);
+        const body = formatBody(message);
+        return this.sendEmail(subject, body);
+    }
+    /**
+     * Send an error response
+     */
+    async sendErrorResponse(message) {
+        return this.sendEmail('❌ Error', message);
+    }
+    /**
+     * Send a confirmation
+     */
+    async sendConfirmation(sessionId) {
+        return this.sendEmail(`✓ Response received for CC-${sessionId}`, 'Your response has been processed.');
+    }
+    /**
+     * Start polling for incoming emails
+     */
+    startPolling(callback, intervalMs = EMAIL_POLL_INTERVAL_MS) {
+        this.messageCallback = callback;
+        if (this.pollInterval !== null) {
+            console.log('[email] Already polling for emails');
+            return;
+        }
+        console.log(`[email] Starting to poll for emails every ${String(intervalMs)}ms`);
+        // Do initial check
+        void this.checkForNewEmails();
+        this.pollInterval = setInterval(() => {
+            void this.checkForNewEmails();
+        }, intervalMs);
+    }
+    /**
+     * Check for new emails via IMAP
+     */
+    async checkForNewEmails() {
+        if (this.messageCallback === null)
+            return;
+        try {
+            const client = new ImapFlow({
+                host: this.config.imapHost,
+                port: this.config.imapPort,
+                secure: this.config.imapPort === 993,
+                auth: {
+                    user: this.config.user,
+                    pass: this.config.pass,
+                },
+                logger: false,
+            });
+            await client.connect();
+            const lock = await client.getMailboxLock('INBOX');
+            try {
+                // Search for unread emails from the recipient (replies)
+                const messages = client.fetch({ seen: false, from: this.config.recipient }, { envelope: true, uid: true, bodyParts: ['text'] });
+                for await (const msg of messages) {
+                    // Skip if no envelope
+                    if (msg.envelope === undefined)
+                        continue;
+                    // Skip already processed messages
+                    const messageId = msg.envelope.messageId;
+                    if (messageId !== undefined && this.processedMessageIds.has(messageId)) {
+                        continue;
+                    }
+                    if (messageId !== undefined) {
+                        this.processedMessageIds.add(messageId);
+                    }
+                    const subject = msg.envelope.subject ?? '';
+                    const bodyPart = msg.bodyParts?.get('text');
+                    const body = bodyPart !== undefined ? bodyPart.toString() : '';
+                    console.log(`[email] Received: "${subject}" from ${this.config.recipient}`);
+                    // Parse the message
+                    const parsed = this.parseEmail(subject, body);
+                    this.messageCallback(parsed);
+                    // Mark as read
+                    await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen']);
+                }
+            }
+            finally {
+                lock.release();
+            }
+            await client.logout();
+        }
+        catch (error) {
+            // Ignore polling errors - will retry next interval
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            console.log(`[email] Poll error (will retry): ${msg}`);
+        }
+    }
+    /**
+     * Parse an email for session ID from subject
+     */
+    parseEmail(subject, body) {
+        // Try to extract session ID from [CC-xxx] prefix in subject
+        const match = subject.match(/\[CC-([a-f0-9]+)\]/i);
+        const sessionId = match?.[1] ?? null;
+        // Extract reply text - remove quoted content
+        const replyText = this.extractReplyText(body);
+        return {
+            sessionId,
+            response: replyText.trim(),
+        };
+    }
+    /**
+     * Extract just the reply text, removing quoted content
+     */
+    extractReplyText(body) {
+        // Common patterns for quoted text in email replies
+        const lines = body.split('\n');
+        const replyLines = [];
+        for (const line of lines) {
+            // Stop at common quote markers
+            if (line.startsWith('>'))
+                break;
+            if (line.startsWith('On ') && line.includes(' wrote:'))
+                break;
+            if (line.match(/^-{3,}/) !== null)
+                break; // --- separator
+            if (line.match(/^_{3,}/) !== null)
+                break; // ___ separator
+            replyLines.push(line);
+        }
+        return replyLines.join('\n').trim();
+    }
+    /**
+     * Stop polling for emails
+     */
+    stopPolling() {
+        if (this.pollInterval !== null) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+            console.log('[email] Stopped polling for emails');
+        }
+        this.messageCallback = null;
+    }
+    /**
+     * Verify the from email matches configured recipient
+     */
+    verifyFromEmail(from) {
+        return from.toLowerCase().trim() === this.config.recipient.toLowerCase().trim();
+    }
+    /**
+     * Clean up resources
+     */
+    dispose() {
+        this.stopPolling();
+        if (this.transporter !== null) {
+            this.transporter.close();
+            this.transporter = null;
+        }
+    }
+}
+//# sourceMappingURL=email.js.map

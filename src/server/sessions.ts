@@ -2,7 +2,7 @@
  * Session management for Claude Code instances
  */
 
-import type { Session, SMSResponse, HookEvent, ParsedSMS } from '../shared/types.js';
+import type { Session, EmailResponse, HookEvent, ParsedSMS } from '../shared/types.js';
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -11,7 +11,7 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
  */
 class SessionManager {
   private readonly sessions: Map<string, Session> = new Map();
-  private readonly pendingResponses: Map<string, SMSResponse> = new Map();
+  private readonly pendingResponses: Map<string, EmailResponse> = new Map();
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   /**
@@ -149,7 +149,7 @@ class SessionManager {
   /**
    * Get and consume a response for a session
    */
-  consumeResponse(sessionId: string): SMSResponse | null {
+  consumeResponse(sessionId: string): EmailResponse | null {
     const response = this.pendingResponses.get(sessionId);
     if (response === undefined) {
       return null;

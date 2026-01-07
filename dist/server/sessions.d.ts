@@ -1,7 +1,7 @@
 /**
  * Session management for Claude Code instances
  */
-import type { Session, SMSResponse, HookEvent, ParsedSMS } from '../shared/types.js';
+import type { Session, EmailResponse, HookEvent, ParsedSMS } from '../shared/types.js';
 /**
  * In-memory session store
  */
@@ -60,7 +60,7 @@ declare class SessionManager {
     /**
      * Get and consume a response for a session
      */
-    consumeResponse(sessionId: string): SMSResponse | null;
+    consumeResponse(sessionId: string): EmailResponse | null;
     /**
      * Check if a session has a pending response
      */

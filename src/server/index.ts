@@ -1,17 +1,17 @@
 /**
- * SMS Bridge Server - HTTP server for Claude Code SMS integration
+ * Email Bridge Server - HTTP server for Claude Code email integration
  *
- * Uses macOS Messages.app via imsg CLI for sending and receiving messages.
+ * Uses Gmail SMTP/IMAP for sending and receiving messages.
  */
 
 import { createServer } from 'http';
 import type { IncomingMessage, ServerResponse, Server } from 'http';
-import { loadMessagesConfig } from '../shared/config.js';
+import { loadEmailConfig } from '../shared/config.js';
 import { sessionManager } from './sessions.js';
-import { MessagesClient } from './messages.js';
+import { EmailClient } from './email.js';
 import type { ParsedSMS } from '../shared/types.js';
 import {
-  handleSendSMS,
+  handleSendEmail,
   handleRegisterSession,
   handleGetResponse,
   handleEnableSession,
@@ -31,7 +31,7 @@ const DEFAULT_PORT = 3847;
  */
 export class BridgeServer {
   private server: Server | null = null;
-  private messagesClient: MessagesClient | null = null;
+  private emailClient: EmailClient | null = null;
   private startTime: number = 0;
   private readonly port: number;
 
@@ -43,16 +43,16 @@ export class BridgeServer {
    * Start the server
    */
   async start(): Promise<void> {
-    // Load Messages config
-    const configResult = loadMessagesConfig();
+    // Load Email config
+    const configResult = loadEmailConfig();
     if (!configResult.success) {
       throw new Error(configResult.error);
     }
 
-    this.messagesClient = new MessagesClient(configResult.data);
+    this.emailClient = new EmailClient(configResult.data);
 
-    // Initialize the Messages client
-    const initResult = this.messagesClient.initialize();
+    // Initialize the Email client
+    const initResult = this.emailClient.initialize();
     if (!initResult.success) {
       throw new Error(initResult.error);
     }
@@ -62,9 +62,9 @@ export class BridgeServer {
     // Start session cleanup
     sessionManager.start();
 
-    // Start polling for incoming messages
-    this.messagesClient.startPolling((message: ParsedSMS) => {
-      this.handleIncomingMessage(message);
+    // Start polling for incoming emails
+    this.emailClient.startPolling((message: ParsedSMS) => {
+      void this.handleIncomingMessage(message);
     });
 
     // Create HTTP server
@@ -84,31 +84,34 @@ export class BridgeServer {
   }
 
   /**
-   * Handle incoming message from Messages.app
+   * Handle incoming message from email
    */
-  private handleIncomingMessage(message: ParsedSMS): void {
-    if (this.messagesClient === null) return;
+  private async handleIncomingMessage(message: ParsedSMS): Promise<void> {
+    if (this.emailClient === null) return;
 
     const { sessionId, response } = message;
 
-    console.log(`[server] Incoming message: sessionId=${sessionId ?? 'none'}, response="${response}"`);
+    console.log(`[server] Incoming email: sessionId=${sessionId ?? 'none'}, response="${response}"`);
 
     if (sessionId === null) {
       // Can't determine which session
       const activeIds = sessionManager.getActiveSessionIds();
       if (activeIds.length === 0) {
-        this.messagesClient.sendMessage('No active Claude Code sessions.');
+        await this.emailClient.sendEmail('No Active Sessions', 'No active Claude Code sessions.');
       } else if (activeIds.length === 1) {
         // Single session - auto-route the message
         const singleSessionId = activeIds[0];
         if (singleSessionId !== undefined) {
-          sessionManager.storeResponse(singleSessionId, response, 'messages');
+          sessionManager.storeResponse(singleSessionId, response, 'email');
           console.log(`[server] Response stored for session ${singleSessionId} (auto-routed)`);
-          this.messagesClient.sendConfirmation(singleSessionId);
+          await this.emailClient.sendConfirmation(singleSessionId);
         }
       } else {
         const idList = activeIds.map((id) => `CC-${id}`).join(', ');
-        this.messagesClient.sendMessage(`Multiple sessions active. Reply with [CC-ID] prefix. Active: ${idList}`);
+        await this.emailClient.sendEmail(
+          'Multiple Sessions Active',
+          `Multiple sessions active. Reply with [CC-ID] in subject. Active: ${idList}`
+        );
       }
       return;
     }
@@ -116,18 +119,18 @@ export class BridgeServer {
     if (!sessionManager.hasSession(sessionId)) {
       const activeIds = sessionManager.getActiveSessionIds();
       if (activeIds.length === 0) {
-        this.messagesClient.sendMessage(`Session CC-${sessionId} expired. No active sessions.`);
+        await this.emailClient.sendEmail('Session Expired', `Session CC-${sessionId} expired. No active sessions.`);
       } else {
         const idList = activeIds.map((id) => `CC-${id}`).join(', ');
-        this.messagesClient.sendErrorResponse(`Session CC-${sessionId} expired or not found. Active: ${idList}`);
+        await this.emailClient.sendErrorResponse(`Session CC-${sessionId} expired or not found. Active: ${idList}`);
       }
       return;
     }
 
     // Store the response
-    sessionManager.storeResponse(sessionId, response, 'messages');
+    sessionManager.storeResponse(sessionId, response, 'email');
     console.log(`[server] Response stored for session ${sessionId}`);
-    this.messagesClient.sendConfirmation(sessionId);
+    await this.emailClient.sendConfirmation(sessionId);
   }
 
   /**
@@ -136,9 +139,9 @@ export class BridgeServer {
   async stop(): Promise<void> {
     sessionManager.stop();
 
-    if (this.messagesClient !== null) {
-      this.messagesClient.dispose();
-      this.messagesClient = null;
+    if (this.emailClient !== null) {
+      this.emailClient.dispose();
+      this.emailClient = null;
     }
 
     if (this.server !== null) {
@@ -155,11 +158,11 @@ export class BridgeServer {
    * Get the route context for handlers
    */
   private getContext(): RouteContext {
-    if (this.messagesClient === null) {
+    if (this.emailClient === null) {
       throw new Error('Server not started');
     }
     return {
-      messagesClient: this.messagesClient,
+      emailClient: this.emailClient,
       startTime: this.startTime,
     };
   }
@@ -188,7 +191,7 @@ export class BridgeServer {
 
       // POST /api/send
       if (path === '/api/send' && method === 'POST') {
-        await handleSendSMS(req, res, ctx);
+        await handleSendEmail(req, res, ctx);
         return;
       }
 
@@ -278,15 +281,15 @@ export class BridgeServer {
   private printBanner(): void {
     console.log(`
 ╔════════════════════════════════════════════════════════════════╗
-║           Claude Code SMS Bridge Server                        ║
+║           Claude Code Email Bridge Server                      ║
 ╠════════════════════════════════════════════════════════════════╣
-║  Using macOS Messages.app (via imsg)                           ║
+║  Using Gmail SMTP/IMAP                                         ║
 ║  Listening on port ${this.port.toString().padEnd(40)}║
 ║                                                                ║
 ║  Endpoints:                                                    ║
-║  • POST /api/send        - Send SMS from hooks                 ║
+║  • POST /api/send        - Send email from hooks               ║
 ║  • POST /api/session     - Register session for response       ║
-║  • GET  /api/response/:id - Poll for SMS response              ║
+║  • GET  /api/response/:id - Poll for email response            ║
 ║  • GET  /api/status      - Server health check                 ║
 ╚════════════════════════════════════════════════════════════════╝
 `);

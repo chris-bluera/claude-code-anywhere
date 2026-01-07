@@ -1,14 +1,14 @@
 /**
- * SMS Bridge Server - HTTP server for Claude Code SMS integration
+ * Email Bridge Server - HTTP server for Claude Code email integration
  *
- * Uses macOS Messages.app via imsg CLI for sending and receiving messages.
+ * Uses Gmail SMTP/IMAP for sending and receiving messages.
  */
 /**
  * Bridge server instance
  */
 export declare class BridgeServer {
     private server;
-    private messagesClient;
+    private emailClient;
     private startTime;
     private readonly port;
     constructor(port?: number);
@@ -17,7 +17,7 @@ export declare class BridgeServer {
      */
     start(): Promise<void>;
     /**
-     * Handle incoming message from Messages.app
+     * Handle incoming message from email
      */
     private handleIncomingMessage;
     /**
