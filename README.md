@@ -178,7 +178,8 @@ npx claude-sms status   # Check server and settings
 3. Bridge server sends email via SMTP
 4. User replies to the email
 5. Bridge server reads reply via IMAP polling
-6. Hook retrieves response and returns it to Claude Code
+6. Reply is deleted from inbox after processing
+7. Hook retrieves response and returns it to Claude Code
 
 ---
 
