@@ -68,18 +68,9 @@ The key starts with `KEY...`
 
 ## 5. US Carrier Registration
 
-US carriers require registration for A2P (Application-to-Person) messaging. You have two options:
+US carriers require registration for A2P (Application-to-Person) messaging. **Use a toll-free number** — it's simpler, cheaper, and faster.
 
-| | Toll-Free (Recommended) | 10DLC |
-|---|---|---|
-| **Registration** | Single form per number | Brand + Campaign + opt-in forms + privacy policy |
-| **Cost** | Free to register | $4.50 brand + $15 campaign + $1.50/mo |
-| **Approval** | Usually 1-2 days | Days to weeks, can be rejected for minor issues |
-| **Throughput** | 1,200 msg/min | Up to 6 msg/min (varies by trust score) |
-
-### Option A: Toll-Free Verification (Recommended)
-
-Toll-free numbers are **NOT subject to 10DLC requirements** and have a much simpler registration process.
+### Toll-Free Verification
 
 1. Go to **Messaging** → **Toll-Free Verification**
 2. Click **Verify Number** for your toll-free number
@@ -92,78 +83,14 @@ Toll-free numbers are **NOT subject to 10DLC requirements** and have a much simp
 
 That's it. No brand registration, no campaign forms, no opt-in screenshots.
 
-### Option B: 10DLC Registration (Local Numbers Only)
+### Why Not 10DLC?
 
-<details>
-<summary><b>Click to expand 10DLC instructions (not recommended)</b></summary>
+If you use a local (10-digit) number instead of toll-free, you'll need 10DLC registration which requires:
+- Brand registration ($4.50) + Campaign registration ($15 + $1.50/mo)
+- Opt-in form screenshots, privacy policy compliance, specific message language
+- Campaigns can be rejected for minor issues and take weeks to approve
 
-> **Warning**: 10DLC has extensive compliance requirements including opt-in form screenshots, privacy policy review, and specific message language. Campaigns can be rejected for minor issues.
-
-#### Step 1: Register Your Brand ($4.50 one-time)
-
-1. Go to **Messaging** → **10DLC** → **Brands** → **Create Brand**
-2. Provide business information:
-   - **With EIN**: Legal company name, EIN, address (must match IRS Form CP-575)
-   - **Sole Proprietor**: Name, address, government-issued ID, SSN
-3. Submit and wait for verification (usually instant, sometimes 24-48 hours)
-4. Status should show **Verified** (green dot)
-
-#### Step 2: Create a Campaign ($15 one-time + $1.50/month)
-
-1. Click on your brand → **Create Campaign**
-2. Select use case: `Low Volume Mixed` → `Account Notification`
-3. Vertical: `Information Technology Services`
-
-**Campaign Description:**
-```
-Developer tool notifications. Software sends automated alerts to the
-developer's own mobile phone for task status updates, completion notices,
-and approval requests. Single recipient (developer only).
-```
-
-**Opt In Workflow Description:**
-```
-Digital: Developer configures their own phone number in software settings
-and explicitly enables SMS notifications. Only the account owner receives
-messages. No third-party recipients.
-```
-
-**Opt in message** (must include "Message frequency varies"):
-```
-Claude SMS: You've enabled notifications. Message frequency varies. Reply HELP for help or STOP to unsubscribe. Msg&data rates may apply.
-```
-
-**Opt out message:**
-```
-Claude SMS: You are unsubscribed and will receive no further messages.
-```
-
-**Help message:**
-```
-Claude SMS: For help, visit github.com/chris-bluera/claude-sms
-```
-
-**Sample Message:**
-```
-[CC-abc123] ✅ Session ended: Task completed successfully. Reply with your response. Reply STOP to opt out.
-```
-
-**Campaign attributes** (all No):
-- Embedded Link: No
-- Embedded Phone Number: No
-- Number Pooling: No
-- Age-Gated Content: No
-- Direct Lending or Loan Arrangement: No
-
-**Additional requirements** (common rejection reasons):
-- Opt-in form screenshot showing phone field and SMS consent language ([example](https://support.telnyx.com/en/articles/10684260-10dlc-opt-in-form))
-- Compliant privacy policy ([requirements](https://support.telnyx.com/en/articles/10645583-10dlc-privacy-policy))
-
-#### Step 3: Assign Number to Campaign
-
-Once campaign is approved, add your phone number to the campaign.
-
-</details>
+**Just use toll-free.** It's free to register and approval takes 1-2 days.
 
 ---
 
@@ -212,29 +139,13 @@ TELNYX_WEBHOOK_PUBLIC_KEY=zQuwEq2A2KxzDWGqPPJ7gJhuQ6gFp51w9WxqDhPNVDM=
 
 ## 8. Cost Breakdown
 
-### With Toll-Free (Recommended)
-
 | Item | Cost |
 |------|------|
 | Telnyx toll-free number | ~$2/month |
 | Telnyx SMS (US) | ~$0.004/message |
 | Toll-free verification | Free |
 | Cloudflared tunnel | Free |
-| **First month** | **~$3** |
-| **Ongoing monthly** | **~$3** |
-
-### With 10DLC (Local Number)
-
-| Item | Cost |
-|------|------|
-| Telnyx local number | ~$1/month |
-| Telnyx SMS (US) | ~$0.003/message |
-| 10DLC brand registration | $4.50 one-time |
-| 10DLC campaign review | $15 one-time |
-| 10DLC campaign (Low Volume) | $1.50/month |
-| Cloudflared tunnel | Free |
-| **First month** | **~$25** |
-| **Ongoing monthly** | **~$3-5** |
+| **Monthly total** | **~$3** |
 
 ---
 
@@ -242,11 +153,7 @@ TELNYX_WEBHOOK_PUBLIC_KEY=zQuwEq2A2KxzDWGqPPJ7gJhuQ6gFp51w9WxqDhPNVDM=
 
 ### "Not 10DLC registered" error (code 40010)
 
-This error means you're using a local (10-digit) number without completed 10DLC registration.
-
-**Solutions:**
-1. **Switch to toll-free** (recommended) - Buy a toll-free number and complete the simpler verification
-2. **Complete 10DLC** - See [Option B](#option-b-10dlc-registration-local-numbers-only) above
+You're using a local (10-digit) number. Switch to a toll-free number instead — it doesn't require 10DLC registration.
 
 ### "delivery_failed" status
 

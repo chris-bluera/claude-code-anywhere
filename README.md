@@ -369,16 +369,9 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 <details>
 <summary><b>🇺🇸 US Messages Not Delivering</b></summary>
 
-See [TELNYX.md - US Carrier Registration](./TELNYX.md#5-us-carrier-registration) for complete setup guide.
+If you see error code `40010` ("Not 10DLC registered"), you're using a local number.
 
-**Recommended fix:** Switch to a toll-free number with simple verification (no 10DLC needed).
-
-If using 10DLC (local number):
-1. Brand status must be "Verified"
-2. Campaign status must be "Approved"
-3. Phone number must be assigned to campaign
-
-US carriers block all unregistered A2P traffic with error code `40010`.
+**Fix:** Switch to a toll-free number — it has simpler verification and doesn't require 10DLC. See [TELNYX.md](./TELNYX.md#5-us-carrier-registration).
 </details>
 
 ---
@@ -443,8 +436,6 @@ This provides:
 
 ## 💰 Cost Estimate
 
-### With Toll-Free Number (Recommended)
-
 | Service | Cost |
 |---------|------|
 | Telnyx toll-free number | ~$2/month |
@@ -452,19 +443,6 @@ This provides:
 | Toll-free verification | Free |
 | Cloudflared tunnel | Free |
 | **Monthly total** | **~$3** |
-
-### With Local Number (10DLC)
-
-| Service | Cost |
-|---------|------|
-| Telnyx local number | ~$1/month |
-| Telnyx SMS (US) | ~$0.003/message |
-| 10DLC brand registration | $4.50 one-time |
-| 10DLC campaign review | $15 one-time |
-| 10DLC campaign (Low Volume) | $1.50/month |
-| Cloudflared tunnel | Free |
-| **First month** | **~$25** |
-| **Ongoing monthly** | **~$3-5** |
 
 ---
 
