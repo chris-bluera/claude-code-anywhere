@@ -31,6 +31,7 @@
     "commitlint": "commitlint --edit",
     "audit": "npm i --package-lock-only && npm audit; EXIT=$?; rm -f package-lock.json; exit $EXIT",
     "audit:quiet": "npm i --package-lock-only 2>/dev/null && npm audit 2>&1 | tail -10; rm -f package-lock.json",
+    "update": "bun update",
     "prepare": "husky",
     "version:major": "commit-and-tag-version --release-as major --skip.commit --skip.tag",
     "version:minor": "commit-and-tag-version --release-as minor --skip.commit --skip.tag",
@@ -55,21 +56,21 @@
   "devDependencies": {
     "@commitlint/cli": "^20.3.0",
     "@commitlint/config-conventional": "^20.3.0",
-    "@eslint/js": "^9.17.0",
-    "@types/node": "^22.10.2",
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.19.3",
     "@types/nodemailer": "^7.0.4",
-    "@vitest/coverage-v8": "^2.1.8",
-    "commit-and-tag-version": "^12.5.0",
-    "eslint": "^9.17.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "commit-and-tag-version": "^12.6.1",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
-    "knip": "^5.41.1",
+    "knip": "^5.80.0",
     "prettier": "^3.7.4",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.19.0",
-    "vitest": "^2.1.8"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
+    "vitest": "^4.0.16"
   }
 }
