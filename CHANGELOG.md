@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.3](https://github.com/blueraai/claude-code-anywhere/compare/v0.2.2...v0.2.3) (2026-01-08)
+
+
+### Bug Fixes
+
+* **ci:** use PAT to trigger Release workflow from Auto Release ([09d5b4c](https://github.com/blueraai/claude-code-anywhere/commit/09d5b4c3a44efd19111d90ae5bb1844d10520468))
+
 ## [0.2.2](https://github.com/blueraai/claude-code-anywhere/compare/v0.2.1...v0.2.2) (2026-01-08)
 
 
