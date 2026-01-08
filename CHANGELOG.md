@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.2](https://github.com/blueraai/claude-code-anywhere/compare/v0.2.1...v0.2.2) (2026-01-08)
+
+
+### Bug Fixes
+
+* address code review issues - fail fast, bounded collections, no fallbacks ([952b3d3](https://github.com/blueraai/claude-code-anywhere/commit/952b3d30e69834356cd527782619264d49ce30d7))
+* strip [CC-xxx] prefix from Telegram responses and fail fast on no channels ([adfc2ac](https://github.com/blueraai/claude-code-anywhere/commit/adfc2acc9fc58a791361f63e52a94bb320421aff))
+
 ## [0.2.1](https://github.com/blueraai/claude-code-anywhere/compare/v0.2.0...v0.2.1) (2026-01-08)
 
 ### Features
