@@ -125,15 +125,42 @@ sequenceDiagram
 
 ## Quick Start
 
-### 1. Install the Plugin
+### Option A: Plugin Installation (Per-Session)
+
+Install as a Claude Code plugin — notifications work in sessions that load this plugin:
 
 ```bash
 claude /plugin add github.com/blueraai/claude-code-anywhere
 ```
 
-### 2. Configure at Least One Channel
+### Option B: Global Installation (All Sessions)
 
-Copy `.env.example` to `.env` and configure your channel settings:
+For notifications across ALL Claude Code sessions on your machine:
+
+```bash
+# Clone and run the installer
+git clone https://github.com/blueraai/claude-code-anywhere.git
+cd claude-code-anywhere
+bash scripts/install.sh
+```
+
+This creates a shim that automatically loads the plugin for every `claude` command.
+
+<details>
+<summary><b>What the installer does</b></summary>
+
+1. Creates a shim at `~/.claude-notify/bin/claude`
+2. Adds the shim to your PATH (in .zshrc/.bashrc)
+3. Installs the plugin to `~/.claude-notify/plugins/`
+4. Sets up a background daemon (launchd on macOS, systemd on Linux)
+
+After installation, restart your shell and run `/notify-doctor` to verify.
+
+</details>
+
+### Configure Channels
+
+Copy `.env.example` to `.env` (in the plugin directory) and configure:
 
 **Email:**
 ```env
@@ -150,16 +177,12 @@ TELEGRAM_CHAT_ID=123456789              # Your chat ID
 
 You can configure one or both channels.
 
-### 3. Enable Notifications
+### Enable and Test
 
 ```bash
-/notify on    # Starts server and enables hooks
-```
-
-### 4. Test It
-
-```bash
-/notify-test  # Sends test message to all configured channels
+/notify on      # Starts server and enables hooks
+/notify-test    # Sends test message to all configured channels
+/notify-doctor  # Diagnose installation (after global install)
 ```
 
 ---
@@ -381,6 +404,39 @@ Your statusline will now show:
 - **notify** (dim gray) when notify server is off
 
 Restart Claude Code or wait for statusline refresh to see the change.
+
+</details>
+
+---
+
+### `/notify-doctor`
+
+Diagnose installation and configuration issues. Especially useful after global installation.
+
+<details>
+<summary><b>Example output</b></summary>
+
+```
+╭─────────────────────────────────────────╮
+│  Claude Code Anywhere - Diagnostics    │
+╰─────────────────────────────────────────╯
+
+## PATH Check
+✅ Shim is first in PATH: ~/.claude-notify/bin/claude
+   Real claude: /opt/homebrew/bin/claude
+
+## Service Status
+✅ Daemon running (launchd: com.claude.notify)
+   API: http://localhost:3847
+
+## Plugin Installation
+✅ Plugin installed: v0.3.4
+   Path: ~/.claude-notify/plugins/claude-code-anywhere
+
+## Channels
+✅ Email: you@example.com
+✅ Telegram: Chat ID 123456789
+```
 
 </details>
 
