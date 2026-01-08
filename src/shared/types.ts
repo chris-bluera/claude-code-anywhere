@@ -52,6 +52,18 @@ export interface GlobalState {
 }
 
 /**
+ * Channel status for API responses
+ */
+export interface ChannelStatusInfo {
+  name: string;
+  enabled: boolean;
+  connected: boolean;
+  lastActivity: number | null;
+  error: string | null;
+  config: Record<string, string>;
+}
+
+/**
  * Server status response
  */
 export interface ServerStatus {
@@ -59,6 +71,7 @@ export interface ServerStatus {
   activeSessions: number;
   pendingResponses: number;
   uptime: number;
+  channels: ChannelStatusInfo[];
 }
 
 /**

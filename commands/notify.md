@@ -34,15 +34,24 @@ Toggle notifications on/off or check status. See @skills/notify-server/skill.md 
 3. Check if server running
 4. If not running, start it: `cd "<plugin-root>" && nohup bun run server > /tmp/claude-code-anywhere-server.log 2>&1 &`
 5. Wait for ready, then enable session
-6. Confirm: "Notifications enabled. Server running."
+6. Confirm with channel status (see `status` workflow below for format)
 
 ### `off`
 1. Disable session
 2. Stop server
-3. Confirm: "Notifications disabled. Server stopped."
+3. Confirm with final channel status before stopping (see `status` workflow below for format)
 
 ### `status`
 Report from context above:
 - Server running/stopped
 - Notifications enabled/disabled
 - Active sessions count
+- For each channel in `channels` array:
+  - Name (Email/Telegram)
+  - Config details from `config` object:
+    - Email: `from` and `to` addresses
+    - Telegram: `chatId`
+  - Enabled status
+  - Connected status
+  - Last activity (formatted as relative time if available)
+  - Any error message

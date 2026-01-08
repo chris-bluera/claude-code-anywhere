@@ -183,6 +183,9 @@ export class TelegramClient implements Channel {
       connected: this.client !== null,
       lastActivity: this.lastActivity,
       error: this.lastError,
+      config: {
+        chatId: this.config.chatId,
+      },
     };
   }
 

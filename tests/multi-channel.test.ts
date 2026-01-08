@@ -39,7 +39,6 @@ function createMockChannel(
     name,
     enabled,
     sendMock,
-    pollingCallback,
     initialize: vi.fn().mockResolvedValue(undefined),
     send: sendMock,
     startPolling: vi.fn((callback) => {
@@ -54,6 +53,7 @@ function createMockChannel(
       connected: true,
       lastActivity: Date.now(),
       error: null,
+      config: { test: 'mock' },
     }),
     get pollingCallback() {
       return pollingCallback;

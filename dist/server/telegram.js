@@ -114,6 +114,9 @@ export class TelegramClient {
             connected: this.client !== null,
             lastActivity: this.lastActivity,
             error: this.lastError,
+            config: {
+                chatId: this.config.chatId,
+            },
         };
     }
     /**

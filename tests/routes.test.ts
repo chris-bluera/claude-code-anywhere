@@ -235,13 +235,12 @@ describe('handleGetResponse', () => {
 });
 
 // Helper to create mock context with channel manager
-function createMockContext(): RouteContext & {
-  channelManager: { sendToAll: Mock };
-} {
+function createMockContext(): RouteContext {
   return {
     channelManager: {
       sendToAll: vi.fn(),
-    },
+      getAllStatus: vi.fn().mockReturnValue([]),
+    } as unknown as RouteContext['channelManager'],
     startTime: Date.now() - 60000, // 1 minute ago
   };
 }
@@ -823,6 +822,34 @@ describe('handleCheckSessionEnabled', () => {
   });
 });
 
+// Extended mock context with channel status support
+function createMockContextWithChannels(): RouteContext {
+  return {
+    channelManager: {
+      sendToAll: vi.fn(),
+      getAllStatus: vi.fn().mockReturnValue([
+        {
+          name: 'email',
+          enabled: true,
+          connected: true,
+          lastActivity: Date.now(),
+          error: null,
+          config: { from: 'claude@example.com', to: 'user@example.com' },
+        },
+        {
+          name: 'telegram',
+          enabled: true,
+          connected: true,
+          lastActivity: Date.now(),
+          error: null,
+          config: { chatId: '123456789' },
+        },
+      ]),
+    } as unknown as RouteContext['channelManager'],
+    startTime: Date.now() - 60000, // 1 minute ago
+  };
+}
+
 describe('handleStatus', () => {
   let sessionManager: {
     getSessionCount: Mock;
@@ -863,6 +890,39 @@ describe('handleStatus', () => {
     expect(body.activeSessions).toBe(5);
     expect(body.pendingResponses).toBe(2);
     expect(body.uptime).toBeGreaterThanOrEqual(60);
+  });
+
+  it('includes channel status in response', async () => {
+    const { handleStatus } = await import('../src/server/routes.js');
+
+    sessionManager.getSessionCount.mockReturnValue(1);
+    sessionManager.getPendingResponseCount.mockReturnValue(0);
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const ctx = createMockContextWithChannels();
+
+    handleStatus(req, res, ctx);
+
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as {
+      status: string;
+      channels: Array<{
+        name: string;
+        enabled: boolean;
+        connected: boolean;
+        lastActivity: number | null;
+        error: string | null;
+      }>;
+    };
+    expect(body.channels).toBeDefined();
+    expect(body.channels).toHaveLength(2);
+    expect(body.channels[0].name).toBe('email');
+    expect(body.channels[0].enabled).toBe(true);
+    expect(body.channels[0].connected).toBe(true);
+    expect(body.channels[0].config).toEqual({ from: 'claude@example.com', to: 'user@example.com' });
+    expect(body.channels[1].name).toBe('telegram');
+    expect(body.channels[1].config).toEqual({ chatId: '123456789' });
   });
 });
 

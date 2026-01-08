@@ -292,6 +292,7 @@ export function handleStatus(_req, res, ctx) {
         activeSessions: sessionManager.getSessionCount(),
         pendingResponses: sessionManager.getPendingResponseCount(),
         uptime: Math.floor((Date.now() - ctx.startTime) / 1000),
+        channels: ctx.channelManager.getAllStatus(),
     };
     sendJSON(res, 200, status);
 }

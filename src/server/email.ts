@@ -144,6 +144,10 @@ export class EmailClient implements Channel {
       connected: this.transporter !== null,
       lastActivity: this.lastActivity,
       error: this.lastError,
+      config: {
+        from: this.config.user,
+        to: this.config.recipient,
+      },
     };
   }
 

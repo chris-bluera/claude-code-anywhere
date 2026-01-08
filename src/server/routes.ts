@@ -368,6 +368,7 @@ export function handleStatus(_req: IncomingMessage, res: ServerResponse, ctx: Ro
     activeSessions: sessionManager.getSessionCount(),
     pendingResponses: sessionManager.getPendingResponseCount(),
     uptime: Math.floor((Date.now() - ctx.startTime) / 1000),
+    channels: ctx.channelManager.getAllStatus(),
   };
   sendJSON(res, 200, status);
 }

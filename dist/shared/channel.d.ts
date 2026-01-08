@@ -31,6 +31,7 @@ export interface ChannelStatus {
     connected: boolean;
     lastActivity: number | null;
     error: string | null;
+    config: Record<string, string>;
 }
 /**
  * Callback for receiving responses from channels
