@@ -226,10 +226,7 @@ install_launchd_service() {
 
     local plist_dir="$HOME/Library/LaunchAgents"
     local plist_file="$plist_dir/com.claude.notify.plist"
-    local log_dir="$INSTALL_ROOT/logs"
-
     mkdir -p "$plist_dir"
-    mkdir -p "$log_dir"
 
     # Find bun path
     local bun_path
@@ -254,10 +251,6 @@ install_launchd_service() {
     <true/>
     <key>KeepAlive</key>
     <true/>
-    <key>StandardOutPath</key>
-    <string>$log_dir/daemon.log</string>
-    <key>StandardErrorPath</key>
-    <string>$log_dir/daemon.err</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>

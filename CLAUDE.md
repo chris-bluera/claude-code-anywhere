@@ -67,10 +67,9 @@ This file is YOUR (Claude's) project memory. It is NOT user documentation. It is
 
 ## Logging
 
-- Logs: `logs/YY-MM-DD.log` (git-ignored)
+- Logs: `logs/YY-MM-DD.log` (git-ignored, with size rotation)
 - Logger: `src/shared/logger.ts` - use `createLogger('component')`
 - Email logging: `log.email('SENT'|'RECEIVED', { from, to, subject, body, messageId })`
-- Global daemon logs: `~/.claude-notify/logs/daemon.log` and `daemon.err`
 - **Required env vars** (no defaults - fail fast):
   - `LOG_MAX_SIZE_MB` - max file size before rotation
   - `LOG_MAX_ROTATED_FILES` - number of rotated files to keep

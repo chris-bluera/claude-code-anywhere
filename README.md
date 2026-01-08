@@ -615,8 +615,8 @@ On first session, a one-time message explains SESSION-ONLY vs GLOBAL modes. To s
 
 1. **Daemon not starting:**
    - macOS: `launchctl list | grep claude`
-   - Check logs: `cat ~/.claude-notify/logs/daemon.log`
-   - Check errors: `cat ~/.claude-notify/logs/daemon.err`
+   - Check logs: `ls ~/.claude-notify/plugins/claude-code-anywhere/logs/`
+   - View latest: `cat ~/.claude-notify/plugins/claude-code-anywhere/logs/*.log | tail -50`
 
 2. **Shim not first in PATH:**
    - Run `which claude` — should show `~/.claude-notify/bin/claude`
