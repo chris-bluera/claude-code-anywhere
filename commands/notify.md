@@ -3,7 +3,7 @@ description: Toggle notifications on/off or check status
 argument-hint: on | off | status | install | uninstall
 allowed-tools:
   - Bash(.claude/cpr.sh *)
-  - Bash(curl *)
+  - Bash(curl * http://localhost:*/api/*)
   - Bash(test *)
   - Bash(${CLAUDE_PLUGIN_ROOT}/scripts/install.sh)
   - Bash(${CLAUDE_PLUGIN_ROOT}/scripts/uninstall.sh)
