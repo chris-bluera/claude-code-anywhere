@@ -266,7 +266,7 @@ TELEGRAM_CHAT_ID=123456789
 
 **Replying to Notifications**
 
-Reply directly to any message from the bot. Telegram's reply-to-message feature automatically links your response to the correct Claude session.
+Simply send a message in the chat — it will automatically be linked to the most recent notification. You can also use Telegram's reply feature for explicit threading.
 
 </details>
 
@@ -378,7 +378,7 @@ Settings persist in `~/.claude/claude-code-anywhere/state.json`:
 <summary><b>Response Not Received</b></summary>
 
 1. For email: Reply from the correct address (`EMAIL_RECIPIENT`)
-2. For Telegram: Reply directly to the bot's message
+2. For Telegram: Send a message in the bot chat (or use explicit reply)
 3. Check server logs for polling errors
 4. Ensure session hasn't expired (30 min timeout)
 
