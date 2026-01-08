@@ -397,14 +397,17 @@ Settings persist in `~/.claude/claude-code-anywhere/state.json`:
 
 ## Comparison with Claude Code Remote
 
-[Claude Code Remote](https://github.com/anthropics/claude-code-remote) is a feature-rich notification system we discovered mid-development. We've borrowed some ideas from it. Here's how they compare:
+[Claude Code Remote](https://github.com/JessyTsui/Claude-Code-Remote) is a feature-rich notification system that inspired some of our design. Here's how they compare:
 
 | Feature | Claude Code Anywhere | Claude Code Remote |
 |---------|---------------------|-------------------|
 | **Channels** | Email, Telegram | Email, Telegram, LINE, Desktop |
 | **Integration** | Native hooks + HTTP | PTY relay + scripts |
 | **Setup** | `.env` file | Interactive wizard |
-| **Codebase** | TypeScript, 85% tested | JavaScript |
+| **Codebase** | TypeScript, 89% tested | JavaScript |
+| **Telegram mode** | Polling (simpler) | Webhook |
+| **Public URL needed** | No | Yes (for webhooks) |
+| **Group support** | 1:1 only | Groups supported |
 | **Focus** | Clean, minimal, reliable | Feature-rich, flexible |
 
 Both projects solve the same problem. We use Claude Code's native hook system; Claude Code Remote uses terminal injection for more direct control.
@@ -412,11 +415,14 @@ Both projects solve the same problem. We use Claude Code's native hook system; C
 **When to use Claude Code Anywhere:**
 - You want simple `.env` configuration
 - Email and/or Telegram are sufficient
+- You don't want to set up a public URL for webhooks
 - You prefer a typed, tested codebase
 - Plugin-based installation is preferred
 
 **When to use Claude Code Remote:**
 - You need LINE or desktop notifications
+- You need group/team notifications
+- You have a public URL for webhooks
 - You want direct terminal control
 - You prefer interactive setup wizards
 
