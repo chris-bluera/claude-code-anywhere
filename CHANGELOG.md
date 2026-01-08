@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.0](https://github.com/blueraai/claude-code-anywhere/compare/v0.3.4...v0.4.0) (2026-01-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Installation directory changed from ~/.claude-notify
+to ~/.claude-code-anywhere. Existing global installations must uninstall
+and reinstall.
+
+Changes:
+- Rename all paths: ~/.claude-notify → ~/.claude-code-anywhere
+- Rename service: claude-notify.service → claude-code-anywhere.service
+- Rename launchd: com.claude.notify → com.claude.code-anywhere
+- Scope all wildcard permissions to specific paths/commands:
+  - curl: localhost API only
+  - rm: ~/.config/claude-code-anywhere/ only
+  - kill → pkill -f "bun run server" (process name, not port)
+  - launchctl/systemctl: specific service files only
+  - Remove unused test -d *
+- Add dynamic port support via port file
+- Update skills to use PORT variable from port file
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+
+* rename claude-notify to claude-code-anywhere + scope permissions ([bc39635](https://github.com/blueraai/claude-code-anywhere/commit/bc396352c749e2e0cacc94e27962c567bf610aaf))
+
+
+### Features
+
+* add SessionStart hook for mode guidance + install/uninstall commands ([8c1cd6a](https://github.com/blueraai/claude-code-anywhere/commit/8c1cd6afa3b7e3479cf5b435b6a5112688572774))
+* **commands:** add /notify-doctor diagnostic command ([e52e70f](https://github.com/blueraai/claude-code-anywhere/commit/e52e70f2b64c2574ff21d201e227b300856b6b44))
+* **logger:** add YY-MM-DD format + size-based rotation ([4a600f9](https://github.com/blueraai/claude-code-anywhere/commit/4a600f9b4e6a4da899ee216d531a6bca879f9fbd))
+* **scripts:** add global installer and uninstaller ([16014d0](https://github.com/blueraai/claude-code-anywhere/commit/16014d0506840eb363cb856d7cad5df634d9c3a9))
+* **server:** add dynamic port file for hook discovery ([fb15ea9](https://github.com/blueraai/claude-code-anywhere/commit/fb15ea95820226f19ac08d2e11ac2fd1b411968a))
+
+
+### Bug Fixes
+
+* **commands:** add test to allowed-tools for mode detection ([55a0c89](https://github.com/blueraai/claude-code-anywhere/commit/55a0c89eaeb3814e543e47ed5319f84fc58d4fda))
+* **commands:** make notify-doctor mode-aware ([5579200](https://github.com/blueraai/claude-code-anywhere/commit/55792003f8ab062a4b607e91af2971be560ad4eb))
+* **commands:** scope curl permission to localhost API only ([5a7c15b](https://github.com/blueraai/claude-code-anywhere/commit/5a7c15b329bfd02f30c298186e70635aa14bced7))
+* **commands:** scope test permission to ~/.claude-notify/ ([c313893](https://github.com/blueraai/claude-code-anywhere/commit/c313893140170a44c2edd4c593d07739a63698f1))
+* **hooks:** read session_id from JSON stdin instead of env vars ([7828100](https://github.com/blueraai/claude-code-anywhere/commit/7828100a42baff9160c553637bdbac80425f402f))
+* **install:** add official claude binary paths ([a818678](https://github.com/blueraai/claude-code-anywhere/commit/a81867879077f33628312fe4a5070a74afec4ff1))
+* **install:** remove static daemon logs, use logger's YY-MM-DD format ([53f1dc1](https://github.com/blueraai/claude-code-anywhere/commit/53f1dc152806435c187b0c3cc18a6405251f1ee3))
+* **sessions:** remove dangerous single-session guess logic ([2069602](https://github.com/blueraai/claude-code-anywhere/commit/20696028dc0a2aead8e7c6b033391fe47a69c71e))
+
 ## [0.3.4](https://github.com/blueraai/claude-code-anywhere/compare/v0.3.3...v0.3.4) (2026-01-08)
 
 ## [0.3.3](https://github.com/blueraai/claude-code-anywhere/compare/v0.3.2...v0.3.3) (2026-01-08)
