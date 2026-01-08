@@ -40,6 +40,7 @@ port
 # Claude local settings (example is committed, actual is not)
 .claude/settings.local.json
 .claude/*.local.md
+.claude/council-cache/
 
 # Bun
 .bun/
