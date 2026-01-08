@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.0](https://github.com/chris-bluera/claude-sms/compare/v0.1.6...v0.2.0) (2026-01-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Removes Telnyx SMS provider support in favor of native
+macOS Messages.app integration via the imsg CLI tool.
+
+## Why
+- No carrier registration (10DLC/toll-free) required
+- No third-party SMS costs
+- Simpler architecture - direct local integration
+- Works immediately without provider setup
+
+## Changes
+- Add MessagesClient using imsg CLI for send/receive
+- Implement polling-based message retrieval (imsg history)
+- Add hash tracking to filter SMS echoes (self-messaging dedup)
+- Remove Telnyx, tunnel, and webhook signature code
+- Simplify config to just SMS_USER_PHONE
+- Update pre-push hook to use test:coverage:quiet
+- Add comprehensive tests for hash tracking (90%+ coverage)
+- Update README with Twilio/Telnyx comparison and known limitations
+
+## Requirements
+- macOS only
+- brew install steipete/tap/imsg
+- Full Disk Access for terminal app
+- iPhone with SMS relay enabled
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+
+### Features
+
+* /notify on starts server, /notify off stops it ([ca2e31e](https://github.com/chris-bluera/claude-sms/commit/ca2e31e8c686f2de94836e4be7e2f88ee7525845))
+* auto-load .env file with dotenv ([baf631c](https://github.com/chris-bluera/claude-sms/commit/baf631c9af66159cc9465d0cff5f6c373bfdb04f))
+* configurable poll interval and improved MIME parsing ([478566c](https://github.com/chris-bluera/claude-sms/commit/478566c043c143708420ad4da52178bbf83b1bd2))
+* replace iMessage with email (SMTP/IMAP) backend ([3a96fb8](https://github.com/chris-bluera/claude-sms/commit/3a96fb88cdd34a7b3710194403776bc497542e17))
+* replace Telnyx with macOS Messages.app backend ([eea1983](https://github.com/chris-bluera/claude-sms/commit/eea1983243b085b2624ec6c13aa7729da0733050))
+* switch from SMS to iMessage for duplicate-free messaging ([8e21579](https://github.com/chris-bluera/claude-sms/commit/8e21579b10e719aba02230e6631a63aad3a63511))
+
+
+### Bug Fixes
+
+* delete processed emails to prevent re-processing ([a96855a](https://github.com/chris-bluera/claude-sms/commit/a96855adc580af7aebf0b6f9e877b20b0ef2f477))
+
 ## [0.1.6](https://github.com/chris-bluera/claude-sms/compare/v0.1.5...v0.1.6) (2026-01-07)
 
 ## [0.1.5](https://github.com/chris-bluera/claude-sms/compare/v0.1.4...v0.1.5) (2026-01-07)

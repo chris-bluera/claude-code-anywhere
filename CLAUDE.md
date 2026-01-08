@@ -23,7 +23,7 @@ This file is YOUR (Claude's) project memory. It is NOT user documentation. It is
 - `bun run precommit` - Full validation (lint, typecheck, tests, build)
 
 **Versioning (after code changes):**
-- `bun run version:patch` - Bump patch version (updates package.json, plugin/plugin.json, CHANGELOG.md)
+- `bun run version:patch` - Bump patch version (updates package.json, .claude-plugin/plugin.json, CHANGELOG.md)
 - `bun run version:minor` - Bump minor version
 - `bun run version:major` - Bump major version
 
@@ -66,3 +66,10 @@ This file is YOUR (Claude's) project memory. It is NOT user documentation. It is
 * use `--no-verify` on Git commits; this anti-pattern completely circumvents the code protections we have in place
 * write "fallback code" or "graceful degradation" code or implement "defaults" *unless* it's part of the specification
 * leave commented code, nor reference outdated/deprecated implementations
+
+## Logging
+
+- Logs: `logs/MM-DD-YY.log` (git-ignored)
+- Logger: `src/shared/logger.ts` - use `createLogger('component')`
+- Email logging: `log.email('SENT'|'RECEIVED', { from, to, subject, body, messageId })`
+- Check logs for debugging email/server issues

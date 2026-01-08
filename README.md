@@ -53,7 +53,7 @@ When Claude Code needs your input--a question, approval, or notification--you sh
 - **Interactive Prompts** -- Respond to Claude's questions via email reply
 - **Approval Requests** -- Approve or deny destructive operations remotely
 - **Multi-Session** -- Track multiple Claude Code sessions independently
-- **Easy Toggle** -- Enable/disable with `/sms on` or `/sms off`
+- **Easy Toggle** -- Enable/disable with `/notify on` or `/notify off`
 - **Cross-Platform** -- Works on any OS with Node.js
 - **Provider Flexible** -- Gmail by default, configurable SMTP/IMAP
 
@@ -110,7 +110,7 @@ npx claude-sms test
 
 Or in Claude Code:
 ```
-/sms-test
+/notify-test
 ```
 
 ---
@@ -121,12 +121,10 @@ Or in Claude Code:
 
 | Command | Description |
 |---------|-------------|
-| `/sms on` | Enable notifications for current session |
-| `/sms on --all` | Enable notifications globally |
-| `/sms off` | Disable notifications for current session |
-| `/sms off --all` | Disable notifications globally |
-| `/sms status` | Show current status |
-| `/sms-test` | Send a test email |
+| `/notify on` | Start server and enable notifications |
+| `/notify off` | Stop server and disable notifications |
+| `/notify status` | Show current status |
+| `/notify-test` | Send a test email |
 
 ### CLI Commands
 
@@ -147,10 +145,9 @@ Or in Claude Code:
 
 ```bash
 # In Claude Code
-/sms on          # Enable for this session
-/sms off         # Disable for this session
-/sms off --all   # Disable globally
-/sms status      # Check current state
+/notify on       # Start server and enable notifications
+/notify off      # Stop server and disable notifications
+/notify status   # Check current state
 ```
 
 ### From Command Line
@@ -270,6 +267,17 @@ Settings are stored in `~/.claude/claude-sms/state.json`:
 
 ---
 
+## Logging
+
+Server logs are written to both console and file:
+- **Location:** `logs/MM-DD-YY.log` in the plugin directory
+- **Format:** `[HH:MM:SS.mmm] [LEVEL] [component] message`
+- **Components:** `email`, `server`, `sessions`
+
+Logs include full email details (from, to, subject, body, messageId) for debugging.
+
+---
+
 ## Security
 
 - **App Passwords** -- Never use your main email password; use app-specific passwords
@@ -322,6 +330,27 @@ Gmail no longer supports "less secure apps." You must:
 2. Create an app-specific password at https://myaccount.google.com/apppasswords
 3. Use the 16-character app password (without spaces)
 </details>
+
+---
+
+## Plugin Structure
+
+The plugin follows the Claude Code plugin convention:
+
+```
+claude-sms/
+├── .claude-plugin/
+│   └── plugin.json          # Plugin manifest
+├── commands/
+│   ├── notify.md            # /notify command
+│   └── notify-test.md       # /notify-test command
+├── hooks/
+│   ├── hooks.json           # Hook definitions
+│   └── scripts/             # Hook scripts
+├── src/                     # TypeScript source
+├── dist/                    # Built JavaScript
+└── package.json             # npm package
+```
 
 ---
 
