@@ -1,7 +1,7 @@
 /**
  * Email client for sending and receiving messages via SMTP/IMAP
  *
- * Replaces the macOS Messages.app integration with traditional email.
+ * Implements the Channel interface for multi-channel support.
  * Uses Gmail by default (smtp.gmail.com / imap.gmail.com).
  */
 
@@ -10,6 +10,7 @@ import { ImapFlow } from 'imapflow';
 
 type NodemailerTransporter = ReturnType<typeof nodemailer.createTransport>;
 import type { Result, HookEvent, ParsedSMS } from '../shared/types.js';
+import type { Channel, ChannelNotification, ChannelResponse, ChannelStatus, ResponseCallback } from '../shared/channel.js';
 import { MAX_EMAIL_BODY_LENGTH } from '../shared/constants.js';
 import { createLogger } from '../shared/logger.js';
 import { sessionManager } from './sessions.js';
@@ -81,22 +82,95 @@ function getEventHeader(event: HookEvent): string {
 
 /**
  * Email client for sending and receiving messages
+ * Implements the Channel interface for multi-channel support
  */
-export class EmailClient {
+export class EmailClient implements Channel {
+  public readonly name = 'email';
+  public readonly enabled: boolean = true;
+
   private readonly config: EmailConfig;
   private transporter: NodemailerTransporter | null = null;
-  private messageCallback: ((message: ParsedSMS) => void) | null = null;
+  private messageCallback: ResponseCallback | null = null;
   private pollInterval: NodeJS.Timeout | null = null;
   private readonly processedMessageIds: Set<string> = new Set();
+  private lastActivity: number | null = null;
+  private lastError: string | null = null;
 
   constructor(config: EmailConfig) {
     this.config = config;
   }
 
   /**
+   * Validate that all required configuration is present
+   * Throws if config is missing or invalid
+   */
+  validateConfig(): void {
+    if (!this.config.user) {
+      throw new Error('EMAIL_USER is required');
+    }
+    if (!this.config.pass) {
+      throw new Error('EMAIL_PASS is required');
+    }
+    if (!this.config.recipient) {
+      throw new Error('EMAIL_RECIPIENT is required');
+    }
+    if (!this.config.smtpHost) {
+      throw new Error('SMTP_HOST is required');
+    }
+    if (!this.config.imapHost) {
+      throw new Error('IMAP_HOST is required');
+    }
+  }
+
+  /**
+   * Get current channel status for diagnostics
+   */
+  getStatus(): ChannelStatus {
+    return {
+      name: this.name,
+      enabled: this.enabled,
+      connected: this.transporter !== null,
+      lastActivity: this.lastActivity,
+      error: this.lastError,
+    };
+  }
+
+  /**
    * Initialize the email client - set up SMTP transporter
    */
-  initialize(): Result<void, string> {
+  async initialize(): Promise<void> {
+    this.validateConfig();
+
+    try {
+      this.transporter = nodemailer.createTransport({
+        host: this.config.smtpHost,
+        port: this.config.smtpPort,
+        secure: this.config.smtpPort === 465,
+        auth: {
+          user: this.config.user,
+          pass: this.config.pass,
+        },
+      });
+
+      // Verify SMTP connection
+      await this.transporter.verify();
+
+      log.info(`Initialized SMTP transport for ${this.config.user}`);
+      this.lastError = null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.lastError = message;
+      throw new Error(`Failed to initialize email client: ${message}`);
+    }
+  }
+
+  /**
+   * Initialize the email client (sync version for backward compatibility)
+   * @deprecated Use async initialize() instead
+   */
+  initializeSync(): Result<void, string> {
+    this.validateConfig();
+
     try {
       this.transporter = nodemailer.createTransport({
         host: this.config.smtpHost,
@@ -109,14 +183,26 @@ export class EmailClient {
       });
 
       log.info(`Initialized SMTP transport for ${this.config.user}`);
+      this.lastError = null;
       return { success: true, data: undefined };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+      this.lastError = message;
       return {
         success: false,
         error: `Failed to initialize email client: ${message}`,
       };
     }
+  }
+
+  /**
+   * Send a notification through this channel (Channel interface)
+   * Returns message ID on success for tracking replies
+   */
+  async send(notification: ChannelNotification): Promise<Result<string, string>> {
+    const subject = formatSubject(notification.sessionId, notification.event);
+    const body = formatBody(notification.message);
+    return this.sendEmail(subject, body);
   }
 
   /**
@@ -141,9 +227,12 @@ export class EmailClient {
         body,
         messageId: info.messageId,
       });
+      this.lastActivity = Date.now();
+      this.lastError = null;
       return { success: true, data: info.messageId };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      this.lastError = errorMsg;
       return { success: false, error: `Failed to send email: ${errorMsg}` };
     }
   }
@@ -176,9 +265,9 @@ export class EmailClient {
   }
 
   /**
-   * Start polling for incoming emails
+   * Start polling for incoming emails (Channel interface)
    */
-  startPolling(callback: (message: ParsedSMS) => void): void {
+  startPolling(callback: ResponseCallback): void {
     this.messageCallback = callback;
 
     if (this.pollInterval !== null) {
@@ -264,7 +353,21 @@ export class EmailClient {
           // Parse the message - use In-Reply-To header for matching
           const parsed = this.parseEmail(subject, body, inReplyTo);
           log.info('Parsed email', { sessionId: parsed.sessionId, response: parsed.response, matchedBy: inReplyTo !== undefined ? 'inReplyTo' : 'subject' });
-          this.messageCallback(parsed);
+
+          // Convert to ChannelResponse and call callback
+          if (parsed.sessionId !== null) {
+            const channelResponse: ChannelResponse = {
+              sessionId: parsed.sessionId,
+              response: parsed.response,
+              from: fromEmail,
+              timestamp: Date.now(),
+              channel: this.name,
+            };
+            this.lastActivity = Date.now();
+            this.messageCallback(channelResponse);
+          } else {
+            log.warn('Received email without valid session ID', { from: fromEmail, subject });
+          }
 
           // Delete after processing to avoid re-processing on restart
           await client.messageDelete({ uid: msg.uid });

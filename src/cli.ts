@@ -174,12 +174,7 @@ program
 
     try {
       const client = new EmailClient(configResult.data);
-      const initResult = client.initialize();
-
-      if (!initResult.success) {
-        console.error(`Error initializing: ${initResult.error}`);
-        process.exit(1);
-      }
+      await client.initialize();
 
       const result = await client.sendEmail(
         'Test from Claude Code',

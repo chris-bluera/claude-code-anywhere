@@ -1,15 +1,17 @@
 /**
- * Email Bridge Server - HTTP server for Claude Code email integration
+ * Bridge Server - HTTP server for Claude Code multi-channel notifications
  *
- * Uses Gmail SMTP/IMAP for sending and receiving messages.
+ * Supports multiple channels: Email (SMTP/IMAP), Telegram
  */
 
 import { createServer } from 'http';
 import type { IncomingMessage, ServerResponse, Server } from 'http';
-import { loadEmailConfig } from '../shared/config.js';
+import { loadEmailConfig, loadTelegramConfig } from '../shared/config.js';
 import { sessionManager } from './sessions.js';
 import { EmailClient } from './email.js';
-import type { ParsedSMS } from '../shared/types.js';
+import { TelegramClient } from './telegram.js';
+import { ChannelManager } from './channels.js';
+import type { ChannelResponse } from '../shared/channel.js';
 import {
   handleSendEmail,
   handleRegisterSession,
@@ -35,6 +37,7 @@ const DEFAULT_PORT = 3847;
 export class BridgeServer {
   private server: Server | null = null;
   private emailClient: EmailClient | null = null;
+  private channelManager: ChannelManager | null = null;
   private startTime: number = 0;
   private readonly port: number;
 
@@ -46,28 +49,41 @@ export class BridgeServer {
    * Start the server
    */
   async start(): Promise<void> {
-    // Load Email config
-    const configResult = loadEmailConfig();
-    if (!configResult.success) {
-      throw new Error(configResult.error);
+    this.channelManager = new ChannelManager();
+    const enabledChannels: string[] = [];
+
+    // Load Email config (required)
+    const emailConfigResult = loadEmailConfig();
+    if (!emailConfigResult.success) {
+      throw new Error(emailConfigResult.error);
     }
 
-    this.emailClient = new EmailClient(configResult.data);
+    this.emailClient = new EmailClient(emailConfigResult.data);
+    this.channelManager.register(this.emailClient);
+    enabledChannels.push('email');
 
-    // Initialize the Email client
-    const initResult = this.emailClient.initialize();
-    if (!initResult.success) {
-      throw new Error(initResult.error);
+    // Load Telegram config (optional - only add if configured)
+    const telegramConfigResult = loadTelegramConfig();
+    if (telegramConfigResult.success) {
+      const telegramClient = new TelegramClient(telegramConfigResult.data);
+      this.channelManager.register(telegramClient);
+      enabledChannels.push('telegram');
+      log.info('Telegram channel configured');
+    } else {
+      log.info('Telegram channel not configured (optional)');
     }
+
+    // Initialize all registered channels
+    await this.channelManager.initializeAll();
 
     this.startTime = Date.now();
 
     // Start session cleanup
     sessionManager.start();
 
-    // Start polling for incoming emails
-    this.emailClient.startPolling((message: ParsedSMS) => {
-      void this.handleIncomingMessage(message);
+    // Start polling on all channels
+    this.channelManager.startAllPolling((response) => {
+      void this.handleIncomingResponse(response);
     });
 
     // Create HTTP server
@@ -83,42 +99,18 @@ export class BridgeServer {
       this.server?.on('error', reject);
     });
 
-    this.printBanner();
+    this.printBanner(enabledChannels);
   }
 
   /**
-   * Handle incoming message from email
+   * Handle incoming response from any channel
    */
-  private async handleIncomingMessage(message: ParsedSMS): Promise<void> {
+  private async handleIncomingResponse(response: ChannelResponse): Promise<void> {
     if (this.emailClient === null) return;
 
-    const { sessionId, response } = message;
+    const { sessionId, response: responseText, channel } = response;
 
-    log.info('Incoming email', { sessionId: sessionId ?? 'none', response });
-
-    if (sessionId === null) {
-      // Can't determine which session
-      const activeIds = sessionManager.getActiveSessionIds();
-      if (activeIds.length === 0) {
-        log.info('No active sessions, sending notification');
-        await this.emailClient.sendEmail('No Active Sessions', 'No active Claude Code sessions.');
-      } else if (activeIds.length === 1) {
-        // Single session - auto-route the message
-        const singleSessionId = activeIds[0];
-        if (singleSessionId !== undefined) {
-          sessionManager.storeResponse(singleSessionId, response, 'email');
-          log.info(`Response stored for session ${singleSessionId} (auto-routed)`);
-          await this.emailClient.sendConfirmation(singleSessionId);
-        }
-      } else {
-        const idList = activeIds.map((id) => `CC-${id}`).join(', ');
-        await this.emailClient.sendEmail(
-          'Multiple Sessions Active',
-          `Multiple sessions active. Reply with [CC-ID] in subject. Active: ${idList}`
-        );
-      }
-      return;
-    }
+    log.info(`Incoming ${channel} response`, { sessionId, responseText });
 
     if (!sessionManager.hasSession(sessionId)) {
       const activeIds = sessionManager.getActiveSessionIds();
@@ -132,8 +124,8 @@ export class BridgeServer {
     }
 
     // Store the response
-    sessionManager.storeResponse(sessionId, response, 'email');
-    log.info(`Response stored for session ${sessionId}`);
+    sessionManager.storeResponse(sessionId, responseText, channel);
+    log.info(`Response stored for session ${sessionId} via ${channel}`);
     await this.emailClient.sendConfirmation(sessionId);
   }
 
@@ -143,8 +135,9 @@ export class BridgeServer {
   async stop(): Promise<void> {
     sessionManager.stop();
 
-    if (this.emailClient !== null) {
-      this.emailClient.dispose();
+    if (this.channelManager !== null) {
+      this.channelManager.disposeAll();
+      this.channelManager = null;
       this.emailClient = null;
     }
 
@@ -282,20 +275,21 @@ export class BridgeServer {
   /**
    * Print server startup banner
    */
-  private printBanner(): void {
+  private printBanner(enabledChannels: string[]): void {
     log.info(`Server started on port ${String(this.port)}`);
+    const channelsStr = enabledChannels.join(', ');
     console.log(`
 ╔════════════════════════════════════════════════════════════════╗
-║           Claude Code Email Bridge Server                      ║
+║           Claude Code Anywhere - Bridge Server                 ║
 ╠════════════════════════════════════════════════════════════════╣
-║  Using Gmail SMTP/IMAP                                         ║
+║  Channels: ${channelsStr.padEnd(52)}║
 ║  Listening on port ${this.port.toString().padEnd(40)}║
 ║  Logs: logs/MM-DD-YY.log                                       ║
 ║                                                                ║
 ║  Endpoints:                                                    ║
-║  • POST /api/send        - Send email from hooks               ║
+║  • POST /api/send        - Send notification from hooks        ║
 ║  • POST /api/session     - Register session for response       ║
-║  • GET  /api/response/:id - Poll for email response            ║
+║  • GET  /api/response/:id - Poll for response                  ║
 ║  • GET  /api/status      - Server health check                 ║
 ╚════════════════════════════════════════════════════════════════╝
 `);
