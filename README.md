@@ -1,7 +1,7 @@
 # Claude Code Anywhere
 
-[![CI](https://github.com/chris-bluera/claude-code-anywhere/actions/workflows/ci.yml/badge.svg)](https://github.com/chris-bluera/claude-code-anywhere/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](https://github.com/chris-bluera/claude-code-anywhere)
+[![CI](https://github.com/blueraai/claude-code-anywhere/actions/workflows/ci.yml/badge.svg)](https://github.com/blueraai/claude-code-anywhere/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](https://github.com/blueraai/claude-code-anywhere)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
@@ -128,7 +128,7 @@ sequenceDiagram
 ### 1. Install the Plugin
 
 ```bash
-claude /plugin add github.com/chris-bluera/claude-code-anywhere
+claude /plugin add github.com/blueraai/claude-code-anywhere
 ```
 
 ### 2. Configure at Least One Channel
@@ -427,7 +427,7 @@ Both projects solve the same problem. We use Claude Code's native hook system; C
 ### Setup
 
 ```bash
-git clone https://github.com/chris-bluera/claude-code-anywhere.git
+git clone https://github.com/blueraai/claude-code-anywhere.git
 cd claude-code-anywhere
 bun install
 bun run build
@@ -545,5 +545,5 @@ MIT — See [LICENSE](./LICENSE) for details.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/chris-bluera/claude-code-anywhere/issues)
+- **Issues**: [GitHub Issues](https://github.com/blueraai/claude-code-anywhere/issues)
 - **Changelog**: [CHANGELOG.md](./CHANGELOG.md)

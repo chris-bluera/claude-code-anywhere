@@ -3,12 +3,12 @@
   "version": "0.2.1",
   "description": "Email notifications and bidirectional communication for Claude Code",
   "author": {
-    "name": "chris-bluera",
-    "email": "chris@bluera.ai"
+    "name": "Bluera",
+    "email": "contact@bluera.ai"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/chris-bluera/claude-code-anywhere"
+    "url": "https://github.com/blueraai/claude-code-anywhere"
   },
   "license": "MIT",
   "keywords": [
