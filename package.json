@@ -3,17 +3,6 @@
   "version": "0.2.0",
   "description": "Email notifications and bidirectional communication for Claude Code",
   "type": "module",
-  "bin": {
-    "claude-code-anywhere": "./dist/cli.js"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -43,26 +32,8 @@
     "release:minor": "commit-and-tag-version --release-as minor && git push --follow-tags",
     "release:major": "commit-and-tag-version --release-as major && git push --follow-tags"
   },
-  "keywords": [
-    "claude",
-    "claude-code",
-    "email",
-    "notifications",
-    "hooks"
-  ],
   "author": "chris-bluera",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chris-bluera/claude-code-anywhere.git"
-  },
-  "bugs": {
-    "url": "https://github.com/chris-bluera/claude-code-anywhere/issues"
-  },
-  "homepage": "https://github.com/chris-bluera/claude-code-anywhere#readme",
-  "engines": {
-    "node": ">=20.0.0"
-  },
   "dependencies": {
     "axios": "^1.13.2",
     "commander": "^12.1.0",
