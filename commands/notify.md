@@ -4,6 +4,7 @@ argument-hint: on | off | status | install | uninstall
 allowed-tools:
   - Bash(.claude/cpr.sh *)
   - Bash(curl *)
+  - Bash(test *)
   - Bash(${CLAUDE_PLUGIN_ROOT}/scripts/install.sh)
   - Bash(${CLAUDE_PLUGIN_ROOT}/scripts/uninstall.sh)
   - Bash(launchctl *)
