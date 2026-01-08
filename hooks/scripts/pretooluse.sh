@@ -4,26 +4,41 @@
 #
 # Safe for dogfooding: exits 0 (allow) if server isn't running
 
+# Read JSON input from stdin
+INPUT=$(cat)
+
 # Fast check: is server running? (1 second timeout)
 if ! curl -s --connect-timeout 1 http://localhost:3847/api/status > /dev/null 2>&1; then
   exit 0
 fi
 
+# Extract session_id and tool_name from JSON input
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
+TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input // {}')
+
+if [ -z "$SESSION_ID" ]; then
+  exit 0
+fi
+
 # Check if session is enabled
-ENABLED=$(curl -s -X GET "http://localhost:3847/api/session/${CLAUDE_SESSION_ID}/enabled" 2>/dev/null)
+ENABLED=$(curl -s -X GET "http://localhost:3847/api/session/${SESSION_ID}/enabled" 2>/dev/null)
 if ! echo "$ENABLED" | grep -q '"enabled":true'; then
   # Session not enabled, allow the tool
   exit 0
 fi
 
+# Build approval message with tool details
+MESSAGE="Tool: $TOOL_NAME - Approve? (Y/N)"
+
 # Register session and send approval request
 curl -s -X POST http://localhost:3847/api/session \
   -H 'Content-Type: application/json' \
-  -d "{\"sessionId\": \"${CLAUDE_SESSION_ID}\", \"event\": \"PreToolUse\", \"prompt\": \"Tool: ${CLAUDE_TOOL_NAME} - Approve? (Y/N)\"}" > /dev/null
+  -d "{\"sessionId\": \"$SESSION_ID\", \"event\": \"PreToolUse\", \"prompt\": $(echo "$MESSAGE" | jq -Rs .)}" > /dev/null
 
 # Poll for response (60 attempts, 5 seconds each = 5 minutes timeout)
 for i in $(seq 1 60); do
-  RESP=$(curl -s "http://localhost:3847/api/response/${CLAUDE_SESSION_ID}" 2>/dev/null)
+  RESP=$(curl -s "http://localhost:3847/api/response/${SESSION_ID}" 2>/dev/null)
 
   if echo "$RESP" | grep -q '"response"'; then
     ANSWER=$(echo "$RESP" | grep -o '"response":"[^"]*"' | cut -d'"' -f4)
