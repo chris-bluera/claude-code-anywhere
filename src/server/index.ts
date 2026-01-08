@@ -4,7 +4,10 @@
  * Supports multiple channels: Email (SMTP/IMAP), Telegram
  */
 
+import { writeFileSync, unlinkSync } from 'fs';
 import { createServer } from 'http';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { ChannelManager } from './channels.js';
 import { EmailClient } from './email.js';
 import {
@@ -30,6 +33,10 @@ import type { IncomingMessage, ServerResponse, Server } from 'http';
 const log = createLogger('server');
 
 const DEFAULT_PORT = 3847;
+
+// Port file location: repo root (two levels up from dist/server/)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PORT_FILE_PATH = join(__dirname, '..', '..', 'port');
 
 /**
  * Bridge server instance
@@ -99,7 +106,15 @@ export class BridgeServer {
       this.server?.on('error', reject);
     });
 
-    this.printBanner(enabledChannels);
+    // Get actual port (handles port 0 for dynamic assignment)
+    const address = this.server.address();
+    const actualPort = address !== null && typeof address === 'object' ? address.port : this.port;
+
+    // Write port file so hooks can discover the server
+    writeFileSync(PORT_FILE_PATH, String(actualPort), 'utf-8');
+    log.info(`Port file written to ${PORT_FILE_PATH}`);
+
+    this.printBanner(enabledChannels, actualPort);
   }
 
   /**
@@ -141,6 +156,14 @@ export class BridgeServer {
    */
   async stop(): Promise<void> {
     sessionManager.stop();
+
+    // Clean up port file
+    try {
+      unlinkSync(PORT_FILE_PATH);
+      log.info('Port file removed');
+    } catch {
+      // Ignore if file doesn't exist
+    }
 
     if (this.channelManager !== null) {
       this.channelManager.disposeAll();
@@ -286,15 +309,15 @@ export class BridgeServer {
   /**
    * Print server startup banner
    */
-  private printBanner(enabledChannels: string[]): void {
-    log.info(`Server started on port ${String(this.port)}`);
+  private printBanner(enabledChannels: string[], actualPort: number): void {
+    log.info(`Server started on port ${String(actualPort)}`);
     const channelsStr = enabledChannels.join(', ');
     console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║           Claude Code Anywhere - Bridge Server                 ║
 ╠════════════════════════════════════════════════════════════════╣
 ║  Channels: ${channelsStr.padEnd(52)}║
-║  Listening on port ${this.port.toString().padEnd(40)}║
+║  Listening on port ${actualPort.toString().padEnd(40)}║
 ║  Logs: logs/MM-DD-YY.log                                       ║
 ║                                                                ║
 ║  Endpoints:                                                    ║

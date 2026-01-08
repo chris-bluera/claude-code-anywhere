@@ -7,8 +7,14 @@
 # Read JSON input from stdin
 INPUT=$(cat)
 
+# Get port from port file (written by server on startup)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PORT_FILE="$SCRIPT_DIR/../../port"
+PORT=$(cat "$PORT_FILE" 2>/dev/null || echo "3847")
+BRIDGE_URL="http://localhost:$PORT"
+
 # Fast check: is server running? (1 second timeout)
-if ! curl -s --connect-timeout 1 http://localhost:3847/api/status > /dev/null 2>&1; then
+if ! curl -s --connect-timeout 1 "$BRIDGE_URL/api/status" > /dev/null 2>&1; then
   exit 0
 fi
 
@@ -18,6 +24,6 @@ if [ -z "$SESSION_ID" ]; then
   exit 0
 fi
 
-curl -s -X POST http://localhost:3847/api/send \
+curl -s -X POST "$BRIDGE_URL/api/send" \
   -H 'Content-Type: application/json' \
   -d "{\"sessionId\": \"$SESSION_ID\", \"event\": \"Stop\", \"message\": \"Session ended\"}"

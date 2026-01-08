@@ -34,6 +34,9 @@ coverage/
 # State files (should not be committed)
 state.json
 
+# Runtime port file (written by server on startup)
+port
+
 # Claude local settings (example is committed, actual is not)
 .claude/settings.local.json
 .claude/*.local.md

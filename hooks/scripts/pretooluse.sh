@@ -7,8 +7,14 @@
 # Read JSON input from stdin
 INPUT=$(cat)
 
+# Get port from port file (written by server on startup)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PORT_FILE="$SCRIPT_DIR/../../port"
+PORT=$(cat "$PORT_FILE" 2>/dev/null || echo "3847")
+BRIDGE_URL="http://localhost:$PORT"
+
 # Fast check: is server running? (1 second timeout)
-if ! curl -s --connect-timeout 1 http://localhost:3847/api/status > /dev/null 2>&1; then
+if ! curl -s --connect-timeout 1 "$BRIDGE_URL/api/status" > /dev/null 2>&1; then
   exit 0
 fi
 
@@ -22,7 +28,7 @@ if [ -z "$SESSION_ID" ]; then
 fi
 
 # Check if session is enabled
-ENABLED=$(curl -s -X GET "http://localhost:3847/api/session/${SESSION_ID}/enabled" 2>/dev/null)
+ENABLED=$(curl -s -X GET "$BRIDGE_URL/api/session/${SESSION_ID}/enabled" 2>/dev/null)
 if ! echo "$ENABLED" | grep -q '"enabled":true'; then
   # Session not enabled, allow the tool
   exit 0
@@ -32,13 +38,13 @@ fi
 MESSAGE="Tool: $TOOL_NAME - Approve? (Y/N)"
 
 # Register session and send approval request
-curl -s -X POST http://localhost:3847/api/session \
+curl -s -X POST "$BRIDGE_URL/api/session" \
   -H 'Content-Type: application/json' \
   -d "{\"sessionId\": \"$SESSION_ID\", \"event\": \"PreToolUse\", \"prompt\": $(echo "$MESSAGE" | jq -Rs .)}" > /dev/null
 
 # Poll for response (60 attempts, 5 seconds each = 5 minutes timeout)
 for i in $(seq 1 60); do
-  RESP=$(curl -s "http://localhost:3847/api/response/${SESSION_ID}" 2>/dev/null)
+  RESP=$(curl -s "$BRIDGE_URL/api/response/${SESSION_ID}" 2>/dev/null)
 
   if echo "$RESP" | grep -q '"response"'; then
     ANSWER=$(echo "$RESP" | grep -o '"response":"[^"]*"' | cut -d'"' -f4)
