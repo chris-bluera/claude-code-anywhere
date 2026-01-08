@@ -475,7 +475,7 @@ Diagnose installation and configuration issues. Especially useful after global i
    Real claude: ~/.local/bin/claude
 
 ## Service Status
-✅ Daemon running (launchd: com.claude.notify)
+✅ Daemon running (launchd: com.claude.code-anywhere)
    API: http://localhost:3847
 
 ## Plugin Installation
@@ -628,8 +628,8 @@ On first session, a one-time message explains SESSION-ONLY vs GLOBAL modes. To s
 
 3. **Service won't load (macOS):**
    ```bash
-   launchctl load ~/Library/LaunchAgents/com.claude.notify.plist
-   launchctl print gui/$(id -u)/com.claude.notify
+   launchctl load ~/Library/LaunchAgents/com.claude.code-anywhere.plist
+   launchctl print gui/$(id -u)/com.claude.code-anywhere
    ```
 
 4. **Run diagnostics:**

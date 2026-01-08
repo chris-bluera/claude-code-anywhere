@@ -67,7 +67,7 @@ Same as `/notify install` - see below.
 
 ### `off --global`
 1. Stop the global daemon:
-   - macOS: `launchctl unload ~/Library/LaunchAgents/com.claude.notify.plist`
+   - macOS: `launchctl unload ~/Library/LaunchAgents/com.claude.code-anywhere.plist`
    - Linux: `systemctl --user stop claude-code-anywhere.service`
 2. Note: This keeps the shim installed for easy re-enable
 3. To fully remove, use `/notify uninstall`

@@ -82,7 +82,7 @@ Only show ❌ if global install exists but shim not first in PATH.
 
 **macOS:**
 ```bash
-launchctl list | grep com.claude.notify 2>/dev/null || echo "not found"
+launchctl list | grep com.claude.code-anywhere 2>/dev/null || echo "not found"
 ```
 
 **Linux:**
@@ -106,7 +106,7 @@ systemctl --user is-active claude-code-anywhere.service 2>/dev/null || echo "not
    Real claude: /opt/homebrew/bin/claude
 
 ## Service Status
-✅ Daemon running (launchd: com.claude.notify)
+✅ Daemon running (launchd: com.claude.code-anywhere)
 
 ## Server Status
 ✅ API responding: http://localhost:3847
@@ -163,7 +163,7 @@ All systems operational for this session.
 | Issue | Fix |
 |-------|-----|
 | Shim not first in PATH | `source ~/.zshrc` or restart terminal |
-| Daemon not running | `launchctl load ~/Library/LaunchAgents/com.claude.notify.plist` |
+| Daemon not running | `launchctl load ~/Library/LaunchAgents/com.claude.code-anywhere.plist` |
 | Plugin not found | Re-run: `bash scripts/install.sh` |
 
 ## IDE Notes (Global Install only)
