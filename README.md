@@ -491,6 +491,18 @@ Changes take effect on Claude Code restart (no reinstall needed).
 | **Test** | Running + `/notify on` | Full notification flow |
 | **Pause** | Running + `/notify off` | Hooks check and exit early |
 
+### Known Limitation: Plugin Root Path
+
+`${CLAUDE_PLUGIN_ROOT}` is only available inside hook scripts, **not** when Claude executes bash commands from skill/command instructions. This is a known Claude Code limitation ([#9354](https://github.com/anthropics/claude-code/issues/9354), [#12541](https://github.com/anthropics/claude-code/issues/12541)).
+
+**Workaround**: Commands use dynamic context (`!`) to detect the plugin root at runtime:
+```markdown
+## Plugin Root
+!`find ~ -maxdepth 5 -name "plugin.json" -exec grep -l '"name": "claude-code-anywhere"' {} \; 2>/dev/null | head -1 | xargs dirname`
+```
+
+This finds the plugin by searching for its `plugin.json` with the matching name field.
+
 ### Releasing
 
 1. Make changes and commit

@@ -2,7 +2,7 @@
 
 Send a test notification to verify setup. See @skills/notify-server/skill.md for troubleshooting.
 
-## Context
+## Server Status
 
 !`curl -s http://localhost:3847/api/status 2>/dev/null || echo '{"running": false}'`
 

@@ -8,6 +8,10 @@ version: 1.0.0
 
 Implementation details for managing the notification bridge server.
 
+**Important**: The `Plugin Root` path from command context must be used for server commands.
+`${CLAUDE_PLUGIN_ROOT}` is only available in hooks, not skill/command execution.
+See [GitHub #9354](https://github.com/anthropics/claude-code/issues/9354).
+
 ## Server Commands
 
 ### Check Status
@@ -16,8 +20,9 @@ curl -s http://localhost:3847/api/status
 ```
 
 ### Start Server
+Use the plugin root path from command context:
 ```bash
-cd "${CLAUDE_PLUGIN_ROOT}" && nohup bun run server > /tmp/claude-code-anywhere-server.log 2>&1 &
+cd "<plugin-root>" && nohup bun run server > /tmp/claude-code-anywhere-server.log 2>&1 &
 ```
 
 Wait for ready (up to 5 seconds):

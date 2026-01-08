@@ -2,7 +2,11 @@
 
 Toggle notifications on/off or check status. See @skills/notify-server/skill.md for implementation details.
 
-## Context
+## Plugin Root
+
+!`find ~ -maxdepth 5 -name "plugin.json" -exec grep -l '"name": "claude-code-anywhere"' {} \; 2>/dev/null | head -1 | xargs dirname`
+
+## Server Status
 
 !`curl -s http://localhost:3847/api/status 2>/dev/null || echo '{"running": false}'`
 
