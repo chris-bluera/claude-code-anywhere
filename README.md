@@ -388,9 +388,28 @@ cp .claude/settings.local.json.example .claude/settings.local.json
 ```
 
 This provides:
-- Auto-validation after code edits
+- Auto-validation after code edits (PostToolUse hook runs lint/typecheck)
 - Pre-approved common commands
 - Desktop notifications
+
+### Dogfooding
+
+You can develop this plugin while using it with Claude Code:
+
+```bash
+# Load plugin directly from your dev directory
+claude --plugin-dir /path/to/claude-sms
+```
+
+Changes take effect on Claude Code restart (no reinstall needed).
+
+**Safety:** All hook scripts check if the bridge server is running first (1 second timeout). If not running, they exit silently and don't block your workflow.
+
+| Mode | Server | Behavior |
+|------|--------|----------|
+| **Develop** | Off | Hooks do nothing, develop normally |
+| **Test** | Running + `/notify on` | Full email notification flow |
+| **Pause** | Running + `/notify off` | Hooks check and exit early |
 
 ### Releasing
 
