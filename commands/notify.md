@@ -31,6 +31,8 @@ curl -s http://localhost:3847/api/status
 cd /Users/chris/repos/claude-sms && nohup bun run server > /tmp/claude-sms-server.log 2>&1 &
 ```
 
+**Note:** Server logs are written to `logs/MM-DD-YY.log` in the repo directory.
+
 3. Wait for server to be ready (up to 5 seconds):
 ```bash
 for i in 1 2 3 4 5; do curl -s http://localhost:3847/api/status >/dev/null 2>&1 && break || sleep 1; done
