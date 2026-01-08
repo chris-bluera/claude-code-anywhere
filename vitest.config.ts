@@ -6,6 +6,10 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
     exclude: ['node_modules', 'dist'],
+    env: {
+      LOG_MAX_SIZE_MB: '10',
+      LOG_MAX_ROTATED_FILES: '5',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

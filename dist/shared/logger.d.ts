@@ -1,7 +1,8 @@
 /**
  * Application logging utility
  *
- * Writes logs to both console and file (logs/MM-DD-YY.log)
+ * Writes logs to both console and file (logs/YY-MM-DD.log)
+ * Implements size-based rotation (default 10MB, keeps 5 rotated files)
  */
 interface Logger {
     debug: (message: string, data?: unknown) => void;

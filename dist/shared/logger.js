@@ -1,22 +1,41 @@
 /**
  * Application logging utility
  *
- * Writes logs to both console and file (logs/MM-DD-YY.log)
+ * Writes logs to both console and file (logs/YY-MM-DD.log)
+ * Implements size-based rotation (default 10MB, keeps 5 rotated files)
  */
-import { appendFileSync, mkdirSync, existsSync } from 'fs';
+import { appendFileSync, mkdirSync, existsSync, statSync, renameSync, unlinkSync, readdirSync, } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOGS_DIR = join(__dirname, '../../logs');
 /**
- * Get current date formatted as MM-DD-YY
+ * Get required env var or throw
+ */
+function getRequiredEnvNumber(name) {
+    const value = process.env[name];
+    if (value === undefined || value === '') {
+        throw new Error(`Required environment variable ${name} is not set`);
+    }
+    const num = parseInt(value, 10);
+    if (isNaN(num)) {
+        throw new Error(`Environment variable ${name} must be a number, got: ${value}`);
+    }
+    return num;
+}
+/** Maximum log file size in bytes */
+const MAX_LOG_SIZE = getRequiredEnvNumber('LOG_MAX_SIZE_MB') * 1024 * 1024;
+/** Number of rotated log files to keep */
+const MAX_ROTATED_FILES = getRequiredEnvNumber('LOG_MAX_ROTATED_FILES');
+/**
+ * Get current date formatted as YY-MM-DD
  */
 function getDateString() {
     const now = new Date();
+    const year = String(now.getFullYear()).slice(-2);
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
-    const year = String(now.getFullYear()).slice(-2);
-    return `${month}-${day}-${year}`;
+    return `${year}-${month}-${day}`;
 }
 /**
  * Get current timestamp formatted as HH:MM:SS.mmm
@@ -44,6 +63,66 @@ function ensureLogsDir() {
     }
 }
 /**
+ * Rotate log file if it exceeds MAX_LOG_SIZE
+ * Creates numbered backups: file.log.1, file.log.2, etc.
+ * Keeps only MAX_ROTATED_FILES rotated files
+ */
+function rotateLogIfNeeded(logPath) {
+    if (!existsSync(logPath)) {
+        return;
+    }
+    const stats = statSync(logPath);
+    if (stats.size < MAX_LOG_SIZE) {
+        return;
+    }
+    // Rotate existing backups (shift numbers up)
+    for (let i = MAX_ROTATED_FILES - 1; i >= 1; i--) {
+        const oldPath = `${logPath}.${String(i)}`;
+        const newPath = `${logPath}.${String(i + 1)}`;
+        if (existsSync(oldPath)) {
+            if (i === MAX_ROTATED_FILES - 1) {
+                // Delete oldest backup
+                unlinkSync(oldPath);
+            }
+            else {
+                renameSync(oldPath, newPath);
+            }
+        }
+    }
+    // Move current log to .1
+    renameSync(logPath, `${logPath}.1`);
+}
+/**
+ * Clean up old rotated log files beyond MAX_ROTATED_FILES
+ */
+function cleanupOldLogs() {
+    if (!existsSync(LOGS_DIR)) {
+        return;
+    }
+    const files = readdirSync(LOGS_DIR);
+    const rotatedPattern = /^(\d{2}-\d{2}-\d{2})\.log\.(\d+)$/;
+    // Group rotated files by base name
+    const rotatedByBase = new Map();
+    for (const file of files) {
+        const match = rotatedPattern.exec(file);
+        if (match?.[1] !== undefined && match[2] !== undefined) {
+            const base = match[1];
+            const num = parseInt(match[2], 10);
+            const existing = rotatedByBase.get(base) ?? [];
+            existing.push(num);
+            rotatedByBase.set(base, existing);
+        }
+    }
+    // Delete excess rotated files for each base
+    for (const [base, nums] of rotatedByBase) {
+        nums.sort((a, b) => b - a); // Descending order
+        for (let i = MAX_ROTATED_FILES; i < nums.length; i++) {
+            const filePath = join(LOGS_DIR, `${base}.log.${String(nums[i])}`);
+            unlinkSync(filePath);
+        }
+    }
+}
+/**
  * Format a log message
  */
 function formatMessage(level, component, message, data) {
@@ -68,7 +147,15 @@ function writeLog(level, component, message, data) {
     }
     // Write to file (fail fast if logging fails)
     ensureLogsDir();
-    appendFileSync(getLogFilePath(), `${formatted}\n`);
+    const logPath = getLogFilePath();
+    // Rotate if file exceeds size limit
+    rotateLogIfNeeded(logPath);
+    // Write the log entry
+    appendFileSync(logPath, `${formatted}\n`);
+    // Periodically clean up old rotated files (1% chance per write to avoid overhead)
+    if (Math.random() < 0.01) {
+        cleanupOldLogs();
+    }
 }
 /**
  * Create a logger for a specific component
