@@ -65,7 +65,7 @@ When Claude Code needs your input—a question, approval, or notification—you 
 | **Bidirectional** | Send notifications AND receive replies |
 | **Multi-Session** | Track multiple Claude Code sessions independently |
 | **Easy Toggle** | `/notify on` and `/notify off` |
-| **Provider Flexible** | Gmail default, any SMTP/IMAP supported |
+| **Provider Flexible** | Any SMTP/IMAP email provider |
 | **85% Test Coverage** | Production-ready with comprehensive tests |
 
 ---
@@ -101,7 +101,7 @@ flowchart LR
 ### Message Flow
 
 ```mermaid
-%%{init: {'theme': 'default'}}%%
+%%{init: {'theme': 'dark'}}%%
 sequenceDiagram
     participant CC as Claude Code
     participant BS as Bridge Server
