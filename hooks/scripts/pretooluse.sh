@@ -1,6 +1,13 @@
 #!/bin/bash
 # Hook script for PreToolUse events
 # Requests user approval via email for Bash/Write/Edit tools
+#
+# Safe for dogfooding: exits 0 (allow) if server isn't running
+
+# Fast check: is server running? (1 second timeout)
+if ! curl -s --connect-timeout 1 http://localhost:3847/api/status > /dev/null 2>&1; then
+  exit 0
+fi
 
 # Check if session is enabled
 ENABLED=$(curl -s -X GET "http://localhost:3847/api/session/${CLAUDE_SESSION_ID}/enabled" 2>/dev/null)
