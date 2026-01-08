@@ -9,6 +9,7 @@ const VALID_HOOK_EVENTS = new Set([
     'Stop',
     'PreToolUse',
     'UserPromptSubmit',
+    'ResponseSync',
 ]);
 /**
  * Type guard for HookEvent

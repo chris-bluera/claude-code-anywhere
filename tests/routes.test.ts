@@ -342,6 +342,33 @@ describe('handleSendEmail', () => {
     expect(body.error).toBe('Missing or invalid event');
   });
 
+  it('accepts ResponseSync as valid event', async () => {
+    const { handleSendEmail } = await import('../src/server/routes.js');
+    const sessionManager = await import('../src/server/sessions.js');
+
+    vi.mocked(sessionManager.sessionManager.hasSession).mockReturnValue(true);
+    vi.mocked(sessionManager.sessionManager.isSessionEnabled).mockReturnValue(true);
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const ctx = createMockContext();
+    vi.mocked(ctx.channelManager.sendToAll).mockResolvedValue({
+      results: new Map([['email', { success: true, data: 'msg-id' }]]),
+      successCount: 1,
+      failureCount: 0,
+    });
+
+    const promise = handleSendEmail(req, res, ctx);
+    emitRequestBody(
+      req,
+      JSON.stringify({ sessionId: 'test-123', event: 'ResponseSync', message: 'User responded' })
+    );
+    await promise;
+
+    // Should NOT return 400 for invalid event - ResponseSync should be valid
+    expect(res._statusCode).toBe(200);
+  });
+
   it('returns 400 for missing message', async () => {
     const { handleSendEmail } = await import('../src/server/routes.js');
 

@@ -14,6 +14,7 @@ const VALID_HOOK_EVENTS = new Set<string>([
   'Stop',
   'PreToolUse',
   'UserPromptSubmit',
+  'ResponseSync',
 ]);
 
 /**
