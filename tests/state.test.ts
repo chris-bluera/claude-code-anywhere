@@ -50,16 +50,40 @@ describe('loadState', () => {
     expect(() => loadState()).toThrow();
   });
 
-  it('throws when hooks are missing required fields', () => {
-    // State file with only some hooks - should fail validation, not silently fill defaults
+  it('throws when hooks are missing multiple required fields', () => {
+    // State file with only some hooks - should fail validation
     writeFileSync(
       testStateFile,
       JSON.stringify({
         enabled: true,
-        hooks: { Notification: true }, // Missing Stop, PreToolUse, UserPromptSubmit
+        hooks: { Notification: true }, // Missing Stop, PreToolUse, UserPromptSubmit, ResponseSync
       })
     );
     expect(() => loadState()).toThrow(/missing required hook/i);
+  });
+
+  it('auto-migrates state file missing only ResponseSync (v0.2.x to v0.3.x)', () => {
+    // Simulate a v0.2.x state file that has all hooks except ResponseSync
+    writeFileSync(
+      testStateFile,
+      JSON.stringify({
+        enabled: true,
+        hooks: {
+          Notification: true,
+          Stop: true,
+          PreToolUse: true,
+          UserPromptSubmit: false,
+          // ResponseSync is missing - should be auto-added
+        },
+      })
+    );
+
+    // Should NOT throw - should auto-migrate
+    const state = loadState();
+    expect(state.enabled).toBe(true);
+    expect(state.hooks.ResponseSync).toBe(true); // Auto-added with default value
+    expect(state.hooks.Notification).toBe(true); // Original values preserved
+    expect(state.hooks.UserPromptSubmit).toBe(false); // Original values preserved
   });
 
   it('throws when hooks have wrong types', () => {

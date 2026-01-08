@@ -42,9 +42,14 @@ export function loadState(): GlobalState {
 
   const missing = getMissingHooks(parsed.hooks);
   if (missing.length > 0) {
-    throw new Error(
-      `Invalid state file format at ${statePath}: missing required hook fields: ${missing.join(', ')}`
-    );
+    // Auto-migrate: if only ResponseSync is missing (v0.2.x -> v0.3.x upgrade), add it
+    if (missing.length === 1 && missing[0] === 'ResponseSync') {
+      Object.assign(parsed.hooks, { ResponseSync: DEFAULT_STATE.hooks.ResponseSync });
+    } else {
+      throw new Error(
+        `Invalid state file format at ${statePath}: missing required hook fields: ${missing.join(', ')}`
+      );
+    }
   }
 
   if (!isValidState(parsed)) {
