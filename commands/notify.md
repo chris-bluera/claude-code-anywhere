@@ -1,10 +1,16 @@
+---
+allowed-tools:
+  - Bash(.claude/cpr.sh *)
+  - Bash(curl *)
+---
+
 # /notify
 
 Toggle notifications on/off or check status. See @skills/notify-server/skill.md for implementation details.
 
 ## Plugin Root
 
-!`find ~ -maxdepth 5 -name "plugin.json" -exec grep -l '"name": "claude-code-anywhere"' {} \; 2>/dev/null | head -1 | xargs dirname`
+!`.claude/cpr.sh 2>/dev/null || echo "NOT_CONFIGURED"`
 
 ## Server Status
 
@@ -19,10 +25,12 @@ Toggle notifications on/off or check status. See @skills/notify-server/skill.md 
 ## Workflow
 
 ### `on`
-1. Check if server running (see context above)
-2. If not running, start it (see skill)
-3. Wait for ready, then enable session
-4. Confirm: "Notifications enabled. Server running."
+1. Check plugin root (see context above)
+2. If "NOT_CONFIGURED": Run `@skills/bootstrap/skill.md` first, then retry
+3. Check if server running
+4. If not running, start it: `cd "<plugin-root>" && nohup bun run server > /tmp/claude-code-anywhere-server.log 2>&1 &`
+5. Wait for ready, then enable session
+6. Confirm: "Notifications enabled. Server running."
 
 ### `off`
 1. Disable session

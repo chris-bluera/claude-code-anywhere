@@ -6,7 +6,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { ServerStatus, HookEvent } from '../shared/types.js';
 import { sessionManager } from './sessions.js';
 import { stateManager } from './state.js';
-import { EmailClient } from './email.js';
+import type { ChannelManager } from './channels.js';
 
 const VALID_HOOK_EVENTS = new Set<string>(['Notification', 'Stop', 'PreToolUse', 'UserPromptSubmit']);
 
@@ -21,7 +21,7 @@ function isHookEvent(value: unknown): value is HookEvent {
  * Route handler context
  */
 export interface RouteContext {
-  emailClient: EmailClient;
+  channelManager: ChannelManager;
   startTime: number;
 }
 
@@ -155,15 +155,25 @@ export async function handleSendEmail(
     return;
   }
 
-  // Send the email
-  const result = await ctx.emailClient.sendHookMessage(sessionId, event, message);
+  // Send to all channels
+  const result = await ctx.channelManager.sendToAll({
+    sessionId,
+    event,
+    title: `[CC-${sessionId.slice(0, 6)}] ${event}`,
+    message,
+  });
 
-  if (result.success) {
-    // Store the Message-ID for In-Reply-To matching
-    sessionManager.storeMessageId(sessionId, result.data);
-    sendJSON(res, 200, { sent: true, messageId: result.data });
+  if (result.successCount > 0) {
+    // Store first successful message ID for reply matching
+    for (const [, channelResult] of result.results) {
+      if (channelResult.success) {
+        sessionManager.storeMessageId(sessionId, channelResult.data);
+        break;
+      }
+    }
+    sendJSON(res, 200, { sent: true, channels: result.successCount });
   } else {
-    sendError(res, 500, result.error);
+    sendError(res, 500, 'All channels failed to send');
   }
 }
 
@@ -223,15 +233,25 @@ export async function handleRegisterSession(
   // Register the session
   sessionManager.registerSession(sessionId, event, prompt);
 
-  // Send the email
-  const result = await ctx.emailClient.sendHookMessage(sessionId, event, prompt);
+  // Send to all channels
+  const result = await ctx.channelManager.sendToAll({
+    sessionId,
+    event,
+    title: `[CC-${sessionId.slice(0, 6)}] ${event}`,
+    message: prompt,
+  });
 
-  if (result.success) {
-    // Store the Message-ID for In-Reply-To matching
-    sessionManager.storeMessageId(sessionId, result.data);
-    sendJSON(res, 200, { registered: true, messageId: result.data });
+  if (result.successCount > 0) {
+    // Store first successful message ID for reply matching
+    for (const [, channelResult] of result.results) {
+      if (channelResult.success) {
+        sessionManager.storeMessageId(sessionId, channelResult.data);
+        break;
+      }
+    }
+    sendJSON(res, 200, { registered: true, channels: result.successCount });
   } else {
-    sendError(res, 500, result.error);
+    sendError(res, 500, 'All channels failed to send');
   }
 }
 

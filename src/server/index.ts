@@ -155,11 +155,11 @@ export class BridgeServer {
    * Get the route context for handlers
    */
   private getContext(): RouteContext {
-    if (this.emailClient === null) {
+    if (this.channelManager === null) {
       throw new Error('Server not started');
     }
     return {
-      emailClient: this.emailClient,
+      channelManager: this.channelManager,
       startTime: this.startTime,
     };
   }

@@ -22,6 +22,7 @@ export declare class TelegramClient implements Channel {
     private lastError;
     private isPolling;
     private readonly sentMessageIds;
+    private lastSentSessionId;
     constructor(config: TelegramConfig);
     /**
      * Validate that all required configuration is present

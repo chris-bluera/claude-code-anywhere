@@ -493,19 +493,27 @@ Changes take effect on Claude Code restart (no reinstall needed).
 
 ### Known Limitation: Plugin Root Path
 
-`${CLAUDE_PLUGIN_ROOT}` is available in some contexts but **not** when Claude executes bash commands from skill/command instructions. This is a known Claude Code limitation ([#9354](https://github.com/anthropics/claude-code/issues/9354), [#12541](https://github.com/anthropics/claude-code/issues/12541)).
+`${CLAUDE_PLUGIN_ROOT}` is NOT available in most command contexts. This is a known Claude Code limitation ([#9354](https://github.com/anthropics/claude-code/issues/9354), [#12541](https://github.com/anthropics/claude-code/issues/12541)).
 
 | Context | `CLAUDE_PLUGIN_ROOT` Available |
 |---------|-------------------------------|
 | Hook scripts (directly invoked) | Yes |
-| Dynamic context (`!` backtick) | Yes |
+| Dynamic context (`!` backtick) | **No** (tested) |
 | Plugin frontmatter (`allowed-tools`) | Yes (v2.1.0+) |
 | Bash commands from skill instructions | **No** |
 
-**Workaround**: Commands use dynamic context (`!`) to detect the plugin root, which Claude then uses in subsequent bash commands:
-```markdown
-## Plugin Root
-!`find ~ -maxdepth 5 -name "plugin.json" -exec grep -l '"name": "claude-code-anywhere"' {} \; 2>/dev/null | head -1 | xargs dirname`
+**Workaround**: Bootstrap resolver script ([community solution](https://github.com/anthropics/claude-code/issues/9354)).
+
+On first use in a project, Claude will run the bootstrap skill to create `.claude/cpr.sh`:
+```bash
+# The resolver script finds the plugin via:
+# 1. CLAUDE_PLUGIN_ROOT (if available)
+# 2. ~/.claude/plugins/installed_plugins.json lookup
+# 3. Python fallback
+
+# Commands then use:
+PLUGIN_ROOT=$(.claude/cpr.sh)
+cd "$PLUGIN_ROOT" && bun run server
 ```
 
 ### Releasing

@@ -22,7 +22,7 @@ curl -s http://localhost:3847/api/status
 ### Start Server
 Use the plugin root path from command context:
 ```bash
-cd "<plugin-root>" && nohup bun run server > /tmp/claude-code-anywhere-server.log 2>&1 &
+cd "<plugin-root>" && nohup bun run server >> logs/server.log 2>&1 &
 ```
 
 Wait for ready (up to 5 seconds):
@@ -35,16 +35,16 @@ for i in 1 2 3 4 5; do curl -s http://localhost:3847/api/status >/dev/null 2>&1 
 kill $(lsof -t -i:3847) 2>/dev/null || true
 ```
 
-## Session Management
+## Global Enable/Disable
 
-### Enable Session
+### Enable Notifications
 ```bash
-curl -s -X POST http://localhost:3847/api/session/$CLAUDE_SESSION_ID/enable
+curl -s -X POST http://localhost:3847/api/enable
 ```
 
-### Disable Session
+### Disable Notifications
 ```bash
-curl -s -X POST http://localhost:3847/api/session/$CLAUDE_SESSION_ID/disable 2>/dev/null || true
+curl -s -X POST http://localhost:3847/api/disable
 ```
 
 ## Send Test Message

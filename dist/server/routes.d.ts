@@ -2,12 +2,12 @@
  * HTTP API routes for the email bridge server
  */
 import type { IncomingMessage, ServerResponse } from 'http';
-import { EmailClient } from './email.js';
+import type { ChannelManager } from './channels.js';
 /**
  * Route handler context
  */
 export interface RouteContext {
-    emailClient: EmailClient;
+    channelManager: ChannelManager;
     startTime: number;
 }
 /** Maximum request body size (1MB) */

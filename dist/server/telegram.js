@@ -9,25 +9,40 @@ import { TELEGRAM_API_BASE_URL, TELEGRAM_POLL_INTERVAL_MS, TELEGRAM_POLL_TIMEOUT
 import { createLogger } from '../shared/logger.js';
 const log = createLogger('telegram');
 /**
+ * Type guard for Telegram error response
+ */
+function isTelegramErrorResponse(value) {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    if (!('ok' in value) || value.ok !== false) {
+        return false;
+    }
+    if (!('description' in value)) {
+        return false;
+    }
+    const desc = value.description;
+    return typeof desc === 'string';
+}
+/**
  * Format a Telegram message for a hook event
  */
 function formatTelegramMessage(sessionId, event, message) {
     const emoji = getEventEmoji(event);
     const header = getEventHeader(event);
-    return `${emoji} *Claude Code* \\[CC\\-${sessionId}\\]\n\n*${header}*\n\n${escapeMarkdown(message)}\n\n_Reply to this message with your response\\._`;
+    const escapedSessionId = escapeMarkdown(sessionId);
+    return `${emoji} *Claude Code* \\[CC\\-${escapedSessionId}\\]\n\n*${header}*\n\n${escapeMarkdown(message)}\n\n_Reply to this message with your response\\._`;
 }
 function getEventEmoji(event) {
     switch (event) {
         case 'Notification':
-            return '\\u{1F4E2}'; // 📢
+            return '\u{1F4E2}'; // 📢
         case 'Stop':
-            return '\\u{2705}'; // ✅
+            return '\u{2705}'; // ✅
         case 'PreToolUse':
-            return '\\u{26A0}'; // ⚠️
+            return '\u{26A0}'; // ⚠️
         case 'UserPromptSubmit':
-            return '\\u{1F916}'; // 🤖
-        default:
-            return '\\u{1F4AC}'; // 💬
+            return '\u{1F916}'; // 🤖
     }
 }
 function getEventHeader(event) {
@@ -40,8 +55,6 @@ function getEventHeader(event) {
             return 'Approve tool use?';
         case 'UserPromptSubmit':
             return 'Claude needs input';
-        default:
-            return 'Message';
     }
 }
 /**
@@ -66,6 +79,7 @@ export class TelegramClient {
     lastError = null;
     isPolling = false;
     sentMessageIds = new Map(); // messageId -> sessionId
+    lastSentSessionId = null; // eslint-disable-line -- mutable for tracking
     constructor(config) {
         this.config = config;
     }
@@ -146,13 +160,28 @@ export class TelegramClient {
             });
             // Track this message for reply matching
             this.sentMessageIds.set(messageId, notification.sessionId);
+            this.lastSentSessionId = notification.sessionId;
             this.lastActivity = Date.now();
             this.lastError = null;
             return { success: true, data: String(messageId) };
         }
         catch (error) {
-            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            // Extract Telegram API error description from axios error response
+            let errorMsg = 'Unknown error';
+            if (axios.isAxiosError(error)) {
+                const responseData = error.response?.data;
+                if (isTelegramErrorResponse(responseData)) {
+                    errorMsg = responseData.description;
+                }
+                else {
+                    errorMsg = error.message;
+                }
+            }
+            else if (error instanceof Error) {
+                errorMsg = error.message;
+            }
             this.lastError = errorMsg;
+            log.error(`Telegram send error: ${errorMsg}`);
             return { success: false, error: `Failed to send Telegram message: ${errorMsg}` };
         }
     }
@@ -201,6 +230,14 @@ export class TelegramClient {
                     log.debug(`Ignoring message from chat ${String(update.message.chat.id)}`);
                     continue;
                 }
+                // Debug: log full update for troubleshooting
+                log.debug('Telegram update received', {
+                    messageId: update.message.message_id,
+                    text: update.message.text,
+                    hasReplyTo: update.message.reply_to_message !== undefined,
+                    replyToId: update.message.reply_to_message?.message_id,
+                    trackedMessageIds: Array.from(this.sentMessageIds.keys()),
+                });
                 // Try to match session via reply_to_message
                 let sessionId = null;
                 if (update.message.reply_to_message) {
@@ -210,13 +247,18 @@ export class TelegramClient {
                         log.debug(`Matched session ${sessionId} via reply_to_message`);
                     }
                 }
-                // Fallback: try to extract [CC-xxx] from message text
+                // Try to extract [CC-xxx] from message text
                 if (sessionId === null) {
                     const match = update.message.text.match(/\[CC-([a-f0-9]+)\]/i);
                     sessionId = match?.[1] ?? null;
                     if (sessionId !== null) {
                         log.debug(`Matched session ${sessionId} via message text`);
                     }
+                }
+                // Use most recent notification as implicit reply target (1-on-1 chat behavior)
+                if (sessionId === null && this.lastSentSessionId !== null) {
+                    sessionId = this.lastSentSessionId;
+                    log.debug(`Matched session ${sessionId} via sequential reply`);
                 }
                 if (sessionId === null) {
                     log.warn('Received Telegram message without valid session ID', {

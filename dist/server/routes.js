@@ -115,15 +115,25 @@ export async function handleSendEmail(req, res, ctx) {
         sendJSON(res, 200, { sent: false, reason: 'Session disabled' });
         return;
     }
-    // Send the email
-    const result = await ctx.emailClient.sendHookMessage(sessionId, event, message);
-    if (result.success) {
-        // Store the Message-ID for In-Reply-To matching
-        sessionManager.storeMessageId(sessionId, result.data);
-        sendJSON(res, 200, { sent: true, messageId: result.data });
+    // Send to all channels
+    const result = await ctx.channelManager.sendToAll({
+        sessionId,
+        event,
+        title: `[CC-${sessionId.slice(0, 6)}] ${event}`,
+        message,
+    });
+    if (result.successCount > 0) {
+        // Store first successful message ID for reply matching
+        for (const [, channelResult] of result.results) {
+            if (channelResult.success) {
+                sessionManager.storeMessageId(sessionId, channelResult.data);
+                break;
+            }
+        }
+        sendJSON(res, 200, { sent: true, channels: result.successCount });
     }
     else {
-        sendError(res, 500, result.error);
+        sendError(res, 500, 'All channels failed to send');
     }
 }
 /**
@@ -168,15 +178,25 @@ export async function handleRegisterSession(req, res, ctx) {
     }
     // Register the session
     sessionManager.registerSession(sessionId, event, prompt);
-    // Send the email
-    const result = await ctx.emailClient.sendHookMessage(sessionId, event, prompt);
-    if (result.success) {
-        // Store the Message-ID for In-Reply-To matching
-        sessionManager.storeMessageId(sessionId, result.data);
-        sendJSON(res, 200, { registered: true, messageId: result.data });
+    // Send to all channels
+    const result = await ctx.channelManager.sendToAll({
+        sessionId,
+        event,
+        title: `[CC-${sessionId.slice(0, 6)}] ${event}`,
+        message: prompt,
+    });
+    if (result.successCount > 0) {
+        // Store first successful message ID for reply matching
+        for (const [, channelResult] of result.results) {
+            if (channelResult.success) {
+                sessionManager.storeMessageId(sessionId, channelResult.data);
+                break;
+            }
+        }
+        sendJSON(res, 200, { registered: true, channels: result.successCount });
     }
     else {
-        sendError(res, 500, result.error);
+        sendError(res, 500, 'All channels failed to send');
     }
 }
 /**
