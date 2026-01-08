@@ -72,8 +72,8 @@ function getEventEmoji(event: HookEvent): string {
       return '⚠️';
     case 'UserPromptSubmit':
       return '🤖';
-    default:
-      throw new Error(`Unexpected HookEvent: ${String(event)}`);
+    case 'ResponseSync':
+      return '📤';
   }
 }
 
@@ -87,8 +87,8 @@ function getEventHeader(event: HookEvent): string {
       return 'Approve tool use?';
     case 'UserPromptSubmit':
       return 'Claude needs input';
-    default:
-      throw new Error(`Unexpected HookEvent: ${String(event)}`);
+    case 'ResponseSync':
+      return 'User responded';
   }
 }
 

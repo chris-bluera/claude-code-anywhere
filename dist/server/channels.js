@@ -125,5 +125,33 @@ export class ChannelManager {
     get size() {
         return this.channels.size;
     }
+    /**
+     * Sync a user response to all other channels (except the one that received it)
+     * This keeps all channels in sync when user flip-flops between them
+     */
+    async syncResponseToOtherChannels(sessionId, responseText, excludeChannel) {
+        const enabledChannels = this.getEnabledChannels();
+        const otherChannels = enabledChannels.filter((ch) => ch.name !== excludeChannel);
+        if (otherChannels.length === 0) {
+            log.debug('No other channels to sync response to');
+            return;
+        }
+        const syncNotification = {
+            sessionId,
+            event: 'ResponseSync',
+            title: 'Response Received',
+            message: responseText,
+        };
+        const syncPromises = otherChannels.map(async (channel) => {
+            const result = await channel.send(syncNotification);
+            if (result.success) {
+                log.info(`Synced response to ${channel.name}`, { sessionId });
+            }
+            else {
+                log.warn(`Failed to sync response to ${channel.name}: ${result.error}`);
+            }
+        });
+        await Promise.all(syncPromises);
+    }
 }
 //# sourceMappingURL=channels.js.map

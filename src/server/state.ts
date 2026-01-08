@@ -13,6 +13,7 @@ const DEFAULT_STATE: GlobalState = {
     Stop: true,
     PreToolUse: true,
     UserPromptSubmit: false,
+    ResponseSync: true,
   },
 };
 
@@ -138,6 +139,7 @@ const REQUIRED_HOOKS: readonly HookEvent[] = [
   'Stop',
   'PreToolUse',
   'UserPromptSubmit',
+  'ResponseSync',
 ] as const;
 
 /**

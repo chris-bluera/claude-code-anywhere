@@ -4,7 +4,7 @@
 /**
  * Claude Code hook event types
  */
-export type HookEvent = 'Notification' | 'Stop' | 'PreToolUse' | 'UserPromptSubmit';
+export type HookEvent = 'Notification' | 'Stop' | 'PreToolUse' | 'UserPromptSubmit' | 'ResponseSync';
 /**
  * Session state for a Claude Code instance
  */

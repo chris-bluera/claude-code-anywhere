@@ -10,6 +10,7 @@ const DEFAULT_STATE = {
         Stop: true,
         PreToolUse: true,
         UserPromptSubmit: false,
+        ResponseSync: true,
     },
 };
 /**
@@ -115,6 +116,7 @@ const REQUIRED_HOOKS = [
     'Stop',
     'PreToolUse',
     'UserPromptSubmit',
+    'ResponseSync',
 ];
 /**
  * Type guard for GlobalState - validates all required fields exist with correct types

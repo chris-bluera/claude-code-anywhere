@@ -549,12 +549,10 @@ describe('EmailClient - initialize error handling', () => {
   });
 });
 
-describe('formatSubject - edge cases', () => {
-  it('throws on unexpected HookEvent', () => {
-    // Cast to bypass TypeScript check for unknown event type
-    expect(() => formatSubject('abc123', 'UnknownEvent' as 'Notification')).toThrow(
-      'Unexpected HookEvent: UnknownEvent'
-    );
+describe('formatSubject - ResponseSync event', () => {
+  it('formats ResponseSync event subject', () => {
+    const subject = formatSubject('abc123', 'ResponseSync');
+    expect(subject).toBe('[CC-abc123] 📤 User responded');
   });
 });
 

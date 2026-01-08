@@ -72,6 +72,7 @@ describe('loadState', () => {
           Stop: true,
           PreToolUse: true,
           UserPromptSubmit: false,
+          ResponseSync: true,
         },
       })
     );
@@ -100,7 +101,13 @@ describe('saveState', () => {
 
     const state = {
       enabled: true,
-      hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: true,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
 
     try {
@@ -130,7 +137,13 @@ describe('StateManager', () => {
     // Start with enabled state
     const initialState = {
       enabled: true,
-      hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: true,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
     writeFileSync(testStateFile, JSON.stringify(initialState));
 
@@ -148,7 +161,13 @@ describe('StateManager', () => {
   it('isHookEnabled() reads fresh state from disk', () => {
     const initialState = {
       enabled: true,
-      hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: true,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
     writeFileSync(testStateFile, JSON.stringify(initialState));
 
@@ -170,7 +189,13 @@ describe('StateManager', () => {
     // Start with disabled state and Notification hook disabled
     const initialState = {
       enabled: false,
-      hooks: { Notification: false, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: false,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
     writeFileSync(testStateFile, JSON.stringify(initialState));
 
@@ -179,7 +204,13 @@ describe('StateManager', () => {
     // External process modifies the file (simulating CLI enabling Notification hook)
     const modifiedState = {
       enabled: false,
-      hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: true,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
     writeFileSync(testStateFile, JSON.stringify(modifiedState));
 
@@ -197,7 +228,13 @@ describe('StateManager', () => {
     // Start with enabled state and Notification hook disabled
     const initialState = {
       enabled: true,
-      hooks: { Notification: false, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: false,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
     writeFileSync(testStateFile, JSON.stringify(initialState));
 
@@ -206,7 +243,13 @@ describe('StateManager', () => {
     // External process modifies the file (simulating CLI enabling Notification hook)
     const modifiedState = {
       enabled: true,
-      hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+      hooks: {
+        Notification: true,
+        Stop: true,
+        PreToolUse: true,
+        UserPromptSubmit: false,
+        ResponseSync: true,
+      },
     };
     writeFileSync(testStateFile, JSON.stringify(modifiedState));
 

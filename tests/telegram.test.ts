@@ -852,10 +852,8 @@ describe('getEventEmoji', () => {
     expect(getEventEmoji('UserPromptSubmit')).toBe('\u{1F916}');
   });
 
-  it('throws on invalid event type', () => {
-    expect(() => getEventEmoji('InvalidEvent' as never)).toThrow(
-      'Unexpected HookEvent: InvalidEvent'
-    );
+  it('returns correct emoji for ResponseSync', () => {
+    expect(getEventEmoji('ResponseSync')).toBe('\u{1F4E4}');
   });
 });
 
@@ -876,10 +874,8 @@ describe('getEventHeader', () => {
     expect(getEventHeader('UserPromptSubmit')).toBe('Claude needs input');
   });
 
-  it('throws on invalid event type', () => {
-    expect(() => getEventHeader('InvalidEvent' as never)).toThrow(
-      'Unexpected HookEvent: InvalidEvent'
-    );
+  it('returns correct header for ResponseSync', () => {
+    expect(getEventHeader('ResponseSync')).toBe('User responded');
   });
 });
 

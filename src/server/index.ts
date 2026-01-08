@@ -106,7 +106,7 @@ export class BridgeServer {
    * Handle incoming response from any channel
    */
   private async handleIncomingResponse(response: ChannelResponse): Promise<void> {
-    if (this.emailClient === null) return;
+    if (this.channelManager === null || this.emailClient === null) return;
 
     const { sessionId, response: responseText, channel } = response;
 
@@ -131,7 +131,9 @@ export class BridgeServer {
     // Store the response
     sessionManager.storeResponse(sessionId, responseText, channel);
     log.info(`Response stored for session ${sessionId} via ${channel}`);
-    await this.emailClient.sendConfirmation(sessionId);
+
+    // Sync response to other channels (so all channels show the conversation)
+    await this.channelManager.syncResponseToOtherChannels(sessionId, responseText, channel);
   }
 
   /**

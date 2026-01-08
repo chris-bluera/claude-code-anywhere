@@ -67,5 +67,10 @@ export declare class ChannelManager {
      * Get the number of registered channels
      */
     get size(): number;
+    /**
+     * Sync a user response to all other channels (except the one that received it)
+     * This keeps all channels in sync when user flip-flops between them
+     */
+    syncResponseToOtherChannels(sessionId: string, responseText: string, excludeChannel: string): Promise<void>;
 }
 //# sourceMappingURL=channels.d.ts.map

@@ -44,7 +44,13 @@ describe('CLI enable/disable commands', () => {
     it('returns true when state file is valid', () => {
       const validState = {
         enabled: false,
-        hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+        hooks: {
+          Notification: true,
+          Stop: true,
+          PreToolUse: true,
+          UserPromptSubmit: false,
+          ResponseSync: true,
+        },
       };
       writeFileSync(testStateFile, JSON.stringify(validState));
 
@@ -86,7 +92,13 @@ describe('CLI enable/disable commands', () => {
     it('returns true when state file is valid', () => {
       const validState = {
         enabled: true,
-        hooks: { Notification: true, Stop: true, PreToolUse: true, UserPromptSubmit: false },
+        hooks: {
+          Notification: true,
+          Stop: true,
+          PreToolUse: true,
+          UserPromptSubmit: false,
+          ResponseSync: true,
+        },
       };
       writeFileSync(testStateFile, JSON.stringify(validState));
 
