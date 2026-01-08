@@ -23,7 +23,7 @@ if [ -z "$HAS_SRC_CHANGES" ] && [ -z "$HAS_TEST_CHANGES" ]; then
   exit 0
 fi
 
-# Run ALL tests (not just changed) to catch interface breakages
-echo "🧪 Running all tests..."
-bun run test:all --reporter=dot --silent 2>&1 | tail -5 || { echo "❌ Tests failed - push blocked"; exit 1; }
-echo "✅ All tests passed"
+# Run ALL tests with coverage to catch regressions
+echo "🧪 Running tests with coverage..."
+bun run test:coverage:quiet || { echo "❌ Coverage below threshold - push blocked"; exit 1; }
+echo "✅ All tests passed with coverage"
