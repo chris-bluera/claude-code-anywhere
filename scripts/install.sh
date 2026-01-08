@@ -49,6 +49,7 @@ check_dependencies() {
 }
 
 # Find the real claude binary
+# See: https://code.claude.com/docs/en/setup
 find_real_claude() {
     local shim_path="$SHIM_DIR/claude"
 
@@ -61,7 +62,10 @@ find_real_claude() {
     done < <(which -a claude 2>/dev/null || true)
 
     # Second try: check common locations
-    for path in /usr/local/bin/claude /opt/homebrew/bin/claude "$HOME/.npm-global/bin/claude" "$HOME/.local/bin/claude"; do
+    # - ~/.local/bin/claude       Native binary (official, documented)
+    # - ~/.claude/local/claude    npm wrapper (legacy installs)
+    # - Homebrew and npm-global paths
+    for path in "$HOME/.local/bin/claude" "$HOME/.claude/local/claude" /usr/local/bin/claude /opt/homebrew/bin/claude "$HOME/.npm-global/bin/claude"; do
         if [ -x "$path" ] && [ "$path" != "$shim_path" ]; then
             echo "$path"
             return 0
@@ -97,7 +101,8 @@ find_real_claude() {
     done < <(which -a claude 2>/dev/null || true)
 
     # Fallback: check common locations
-    for path in /usr/local/bin/claude /opt/homebrew/bin/claude "$HOME/.npm-global/bin/claude" "$HOME/.local/bin/claude"; do
+    # See: https://code.claude.com/docs/en/setup
+    for path in "$HOME/.local/bin/claude" "$HOME/.claude/local/claude" /usr/local/bin/claude /opt/homebrew/bin/claude "$HOME/.npm-global/bin/claude"; do
         if [ -x "$path" ] && [ "$path" != "$MY_PATH" ]; then
             echo "$path"
             return 0
