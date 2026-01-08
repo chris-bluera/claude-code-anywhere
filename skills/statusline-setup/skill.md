@@ -10,8 +10,8 @@ Intelligently inject notify on/off indicator into any user's statusline.sh.
 
 ## Indicator Format
 
-- `📧` (green \033[32m) when notify server is running
-- `📧` (dim \033[90m) when notify server is off
+- `NOTIFY` (green \033[32m) when notify server is running
+- `notify` (dim gray \033[90m) when notify server is off
 
 ## Code Block to Inject
 
@@ -21,9 +21,9 @@ This exact block must be inserted:
 # --- claude-code-anywhere notify status ---
 NOTIFY_STATUS=""
 if curl -s --max-time 0.3 http://localhost:3847/api/status >/dev/null 2>&1; then
-    NOTIFY_STATUS=$(printf " │ \033[32m📧\033[0m")
+    NOTIFY_STATUS=$(printf " │ \033[32mNOTIFY\033[0m")
 else
-    NOTIFY_STATUS=$(printf " │ \033[90m📧\033[0m")
+    NOTIFY_STATUS=$(printf " │ \033[90mnotify\033[0m")
 fi
 # --- end notify status ---
 ```

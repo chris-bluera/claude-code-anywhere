@@ -377,8 +377,8 @@ Add or remove the notify status indicator from your Claude Code statusline.
 Notify indicator added to statusline.
 
 Your statusline will now show:
-- 📧 (green) when notify server is running
-- 📧 (dim) when notify server is off
+- **NOTIFY** (green) when notify server is running
+- **notify** (dim gray) when notify server is off
 
 Restart Claude Code or wait for statusline refresh to see the change.
 
