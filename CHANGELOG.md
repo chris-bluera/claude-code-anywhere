@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.3.0](https://github.com/blueraai/claude-code-anywhere/compare/v0.2.4...v0.3.0) (2026-01-08)
+
+
+### Features
+
+* sync user responses across all channels ([e085b88](https://github.com/blueraai/claude-code-anywhere/commit/e085b88bb568ba10a2608445e54d96eb4eba5194))
+
 ## [0.2.4](https://github.com/blueraai/claude-code-anywhere/compare/v0.2.3...v0.2.4) (2026-01-08)
 
 
