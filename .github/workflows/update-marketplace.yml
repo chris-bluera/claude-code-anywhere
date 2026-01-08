@@ -1,0 +1,96 @@
+name: Update Marketplace
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+
+# Prevent parallel marketplace updates - queue instead of cancel
+concurrency:
+  group: update-marketplace
+  cancel-in-progress: false
+
+jobs:
+  update-marketplace:
+    runs-on: ubuntu-latest
+    # Only run if Release workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      # Wait for CI to complete successfully
+      - name: Wait for CI to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          check-regexp: '^(lint-and-typecheck|test|build)$'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          allowed-conclusions: success
+
+      # Get the tag name from the workflow run
+      - name: Get tag name
+        id: get_tag
+        env:
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          # Get the tag that triggered the Release workflow
+          # head_branch could be "v0.9.15" or "refs/tags/v0.9.15"
+          TAG_NAME=$(echo "$HEAD_BRANCH" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+          if [ -z "$TAG_NAME" ]; then
+            echo "::error::Could not extract tag from head_branch: $HEAD_BRANCH"
+            exit 1
+          fi
+          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "Tag: ${TAG_NAME}"
+
+      # Extract version from tag (v0.9.9 -> 0.9.9)
+      - name: Extract version
+        id: version
+        run: |
+          TAG_NAME=${{ steps.get_tag.outputs.tag }}
+          VERSION=${TAG_NAME#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION}"
+
+      # Checkout marketplace repo
+      - name: Checkout marketplace repo
+        uses: actions/checkout@v4
+        with:
+          repository: blueraai/bluera-marketplace
+          token: ${{ secrets.MARKETPLACE_PAT }}
+          path: marketplace
+
+      # Update marketplace.json
+      - name: Update marketplace version
+        working-directory: marketplace
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          jq --arg version "$VERSION" \
+            '(.plugins[] | select(.name == "claude-code-anywhere") | .version) = $version' \
+            .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
+
+          mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+
+          echo "Updated marketplace.json to version $VERSION"
+
+      # Commit and push
+      - name: Commit and push marketplace update
+        working-directory: marketplace
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .claude-plugin/marketplace.json
+
+          if git diff --staged --quiet; then
+            echo "No changes - marketplace already up to date"
+            exit 0
+          fi
+
+          git commit -m "chore: update claude-code-anywhere to v$VERSION"
+          git push
+
+          echo "Successfully updated marketplace to v$VERSION"
