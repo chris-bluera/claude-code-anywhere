@@ -1,4 +1,6 @@
 ---
+description: Toggle notifications on/off or check status
+argument-hint: on | off | status
 allowed-tools:
   - Bash(.claude/cpr.sh *)
   - Bash(curl *)
@@ -7,6 +9,8 @@ allowed-tools:
 # /notify
 
 Toggle notifications on/off or check status. See @skills/notify-server/skill.md for implementation details.
+
+**Action requested:** `$1`
 
 ## Plugin Root
 

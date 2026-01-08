@@ -1,3 +1,9 @@
+---
+description: Send a test notification to verify setup
+allowed-tools:
+  - Bash(curl *)
+---
+
 # /notify-test
 
 Send a test notification to verify setup. See @skills/notify-server/skill.md for troubleshooting.
