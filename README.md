@@ -274,12 +274,115 @@ Simply send a message in the chat — it will automatically be linked to the mos
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/notify on` | Start server and enable notifications |
-| `/notify off` | Stop server and disable notifications |
-| `/notify status` | Show current status |
-| `/notify-test` | Send test message to all channels |
+### `/notify status`
+
+Show current server and channel status.
+
+<details open>
+<summary><b>Example output</b></summary>
+
+**Notification Status**
+
+| | Status |
+|---|---|
+| Server | ✅ Running |
+| Uptime | ~8 minutes |
+| Active sessions | 1 |
+| Pending responses | 0 |
+
+**Channels**
+
+| Channel | Config | Enabled | Connected | Last Activity | Error |
+|---------|--------|---------|-----------|---------------|-------|
+| Email | `claudecode@gmail.com` → `you@example.com` | ✅ | ✅ | - | - |
+| Telegram | Chat ID: `123456789` | ✅ | ✅ | - | - |
+
+</details>
+
+---
+
+### `/notify on`
+
+Start the bridge server and enable notifications.
+
+<details>
+<summary><b>Example output</b></summary>
+
+Notifications enabled.
+
+**Notification Status**
+
+| | Status |
+|---|---|
+| Server | ✅ Running |
+| Uptime | just started |
+| Active sessions | 1 |
+| Pending responses | 0 |
+
+**Channels**
+
+| Channel | Config | Enabled | Connected | Last Activity | Error |
+|---------|--------|---------|-----------|---------------|-------|
+| Email | `claudecode@gmail.com` → `you@example.com` | ✅ | ✅ | - | - |
+| Telegram | Chat ID: `123456789` | ✅ | ✅ | - | - |
+
+</details>
+
+---
+
+### `/notify off`
+
+Stop the bridge server and disable notifications.
+
+<details>
+<summary><b>Example output</b></summary>
+
+Notifications disabled. Server stopped.
+
+</details>
+
+---
+
+### `/notify-test`
+
+Send a test message to all configured channels.
+
+<details>
+<summary><b>Example output</b></summary>
+
+Test notification sent!
+
+Sent to 2 channels:
+- ✅ Email
+- ✅ Telegram
+
+Check your inbox/Telegram for the test message.
+
+</details>
+
+---
+
+### `/notify-statusline`
+
+Add or remove the notify status indicator from your Claude Code statusline.
+
+```
+/notify-statusline on   # Add indicator to statusline
+/notify-statusline off  # Remove indicator from statusline
+```
+
+<details>
+<summary><b>Example output</b></summary>
+
+Notify indicator added to statusline.
+
+Your statusline will now show:
+- 📧 (green) when notify server is running
+- 📧 (dim) when notify server is off
+
+Restart Claude Code or wait for statusline refresh to see the change.
+
+</details>
 
 ---
 
@@ -465,7 +568,8 @@ claude-code-anywhere/
 ├── plugin.json               # Plugin manifest
 ├── commands/
 │   ├── notify.md             # /notify command
-│   └── notify-test.md        # /notify-test command
+│   ├── notify-test.md        # /notify-test command
+│   └── notify-statusline.md  # /notify-statusline command
 ├── hooks/
 │   ├── hooks.json            # Hook definitions
 │   └── scripts/              # Hook scripts
