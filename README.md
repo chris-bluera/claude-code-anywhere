@@ -449,8 +449,7 @@ bun run build
 
 ```
 claude-code-anywhere/
-├── .claude-plugin/
-│   └── plugin.json           # Plugin manifest
+├── plugin.json               # Plugin manifest
 ├── commands/
 │   ├── notify.md             # /notify command
 │   └── notify-test.md        # /notify-test command

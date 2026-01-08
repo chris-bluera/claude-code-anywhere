@@ -23,7 +23,7 @@ This file is YOUR (Claude's) project memory. It is NOT user documentation. It is
 - `bun run precommit` - Full validation (lint, typecheck, tests, build)
 
 **Versioning (after code changes):**
-- `bun run version:patch` - Bump patch version (updates package.json, .claude-plugin/plugin.json, CHANGELOG.md)
+- `bun run version:patch` - Bump patch version (updates package.json, plugin.json, CHANGELOG.md)
 - `bun run version:minor` - Bump minor version
 - `bun run version:major` - Bump major version
 
