@@ -26,6 +26,12 @@ export const MAX_EMAIL_BODY_LENGTH = 2000;
 export const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 export const SESSION_CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 // =============================================================================
+// Telegram
+// =============================================================================
+export const TELEGRAM_API_BASE_URL = 'https://api.telegram.org/bot';
+export const TELEGRAM_POLL_INTERVAL_MS = 2000;
+export const TELEGRAM_POLL_TIMEOUT_SECONDS = 30;
+// =============================================================================
 // HTTP
 // =============================================================================
 export const MAX_REQUEST_BODY_SIZE = 1024 * 1024; // 1MB

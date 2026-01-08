@@ -1,7 +1,7 @@
 /**
  * Email client for sending and receiving messages via SMTP/IMAP
  *
- * Replaces the macOS Messages.app integration with traditional email.
+ * Implements the Channel interface for multi-channel support.
  * Uses Gmail by default (smtp.gmail.com / imap.gmail.com).
  */
 import nodemailer from 'nodemailer';
@@ -57,20 +57,86 @@ function getEventHeader(event) {
 }
 /**
  * Email client for sending and receiving messages
+ * Implements the Channel interface for multi-channel support
  */
 export class EmailClient {
+    name = 'email';
+    enabled = true;
     config;
     transporter = null;
     messageCallback = null;
     pollInterval = null;
     processedMessageIds = new Set();
+    lastActivity = null;
+    lastError = null;
     constructor(config) {
         this.config = config;
     }
     /**
+     * Validate that all required configuration is present
+     * Throws if config is missing or invalid
+     */
+    validateConfig() {
+        if (!this.config.user) {
+            throw new Error('EMAIL_USER is required');
+        }
+        if (!this.config.pass) {
+            throw new Error('EMAIL_PASS is required');
+        }
+        if (!this.config.recipient) {
+            throw new Error('EMAIL_RECIPIENT is required');
+        }
+        if (!this.config.smtpHost) {
+            throw new Error('SMTP_HOST is required');
+        }
+        if (!this.config.imapHost) {
+            throw new Error('IMAP_HOST is required');
+        }
+    }
+    /**
+     * Get current channel status for diagnostics
+     */
+    getStatus() {
+        return {
+            name: this.name,
+            enabled: this.enabled,
+            connected: this.transporter !== null,
+            lastActivity: this.lastActivity,
+            error: this.lastError,
+        };
+    }
+    /**
      * Initialize the email client - set up SMTP transporter
      */
-    initialize() {
+    async initialize() {
+        this.validateConfig();
+        try {
+            this.transporter = nodemailer.createTransport({
+                host: this.config.smtpHost,
+                port: this.config.smtpPort,
+                secure: this.config.smtpPort === 465,
+                auth: {
+                    user: this.config.user,
+                    pass: this.config.pass,
+                },
+            });
+            // Verify SMTP connection
+            await this.transporter.verify();
+            log.info(`Initialized SMTP transport for ${this.config.user}`);
+            this.lastError = null;
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.lastError = message;
+            throw new Error(`Failed to initialize email client: ${message}`);
+        }
+    }
+    /**
+     * Initialize the email client (sync version for backward compatibility)
+     * @deprecated Use async initialize() instead
+     */
+    initializeSync() {
+        this.validateConfig();
         try {
             this.transporter = nodemailer.createTransport({
                 host: this.config.smtpHost,
@@ -82,15 +148,26 @@ export class EmailClient {
                 },
             });
             log.info(`Initialized SMTP transport for ${this.config.user}`);
+            this.lastError = null;
             return { success: true, data: undefined };
         }
         catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
+            this.lastError = message;
             return {
                 success: false,
                 error: `Failed to initialize email client: ${message}`,
             };
         }
+    }
+    /**
+     * Send a notification through this channel (Channel interface)
+     * Returns message ID on success for tracking replies
+     */
+    async send(notification) {
+        const subject = formatSubject(notification.sessionId, notification.event);
+        const body = formatBody(notification.message);
+        return this.sendEmail(subject, body);
     }
     /**
      * Send an email
@@ -112,10 +189,13 @@ export class EmailClient {
                 body,
                 messageId: info.messageId,
             });
+            this.lastActivity = Date.now();
+            this.lastError = null;
             return { success: true, data: info.messageId };
         }
         catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            this.lastError = errorMsg;
             return { success: false, error: `Failed to send email: ${errorMsg}` };
         }
     }
@@ -140,7 +220,7 @@ export class EmailClient {
         return this.sendEmail(`✓ Response received for CC-${sessionId}`, 'Your response has been processed.');
     }
     /**
-     * Start polling for incoming emails
+     * Start polling for incoming emails (Channel interface)
      */
     startPolling(callback) {
         this.messageCallback = callback;
@@ -212,7 +292,21 @@ export class EmailClient {
                     // Parse the message - use In-Reply-To header for matching
                     const parsed = this.parseEmail(subject, body, inReplyTo);
                     log.info('Parsed email', { sessionId: parsed.sessionId, response: parsed.response, matchedBy: inReplyTo !== undefined ? 'inReplyTo' : 'subject' });
-                    this.messageCallback(parsed);
+                    // Convert to ChannelResponse and call callback
+                    if (parsed.sessionId !== null) {
+                        const channelResponse = {
+                            sessionId: parsed.sessionId,
+                            response: parsed.response,
+                            from: fromEmail,
+                            timestamp: Date.now(),
+                            channel: this.name,
+                        };
+                        this.lastActivity = Date.now();
+                        this.messageCallback(channelResponse);
+                    }
+                    else {
+                        log.warn('Received email without valid session ID', { from: fromEmail, subject });
+                    }
                     // Delete after processing to avoid re-processing on restart
                     await client.messageDelete({ uid: msg.uid });
                     log.debug(`Deleted email uid=${String(msg.uid)}`);

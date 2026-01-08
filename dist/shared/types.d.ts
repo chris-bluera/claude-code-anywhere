@@ -63,6 +63,13 @@ export interface EmailConfig {
     pollIntervalMs: number;
 }
 /**
+ * Telegram configuration
+ */
+export interface TelegramConfig {
+    botToken: string;
+    chatId: string;
+}
+/**
  * Application configuration
  */
 export interface AppConfig {

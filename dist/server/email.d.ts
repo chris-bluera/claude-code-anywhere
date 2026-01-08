@@ -1,10 +1,11 @@
 /**
  * Email client for sending and receiving messages via SMTP/IMAP
  *
- * Replaces the macOS Messages.app integration with traditional email.
+ * Implements the Channel interface for multi-channel support.
  * Uses Gmail by default (smtp.gmail.com / imap.gmail.com).
  */
-import type { Result, HookEvent, ParsedSMS } from '../shared/types.js';
+import type { Result, HookEvent } from '../shared/types.js';
+import type { Channel, ChannelNotification, ChannelStatus, ResponseCallback } from '../shared/channel.js';
 /**
  * Configuration for Email client
  */
@@ -28,18 +29,42 @@ export declare function formatSubject(sessionId: string, event: HookEvent): stri
 export declare function formatBody(message: string): string;
 /**
  * Email client for sending and receiving messages
+ * Implements the Channel interface for multi-channel support
  */
-export declare class EmailClient {
+export declare class EmailClient implements Channel {
+    readonly name = "email";
+    readonly enabled: boolean;
     private readonly config;
     private transporter;
     private messageCallback;
     private pollInterval;
     private readonly processedMessageIds;
+    private lastActivity;
+    private lastError;
     constructor(config: EmailConfig);
+    /**
+     * Validate that all required configuration is present
+     * Throws if config is missing or invalid
+     */
+    validateConfig(): void;
+    /**
+     * Get current channel status for diagnostics
+     */
+    getStatus(): ChannelStatus;
     /**
      * Initialize the email client - set up SMTP transporter
      */
-    initialize(): Result<void, string>;
+    initialize(): Promise<void>;
+    /**
+     * Initialize the email client (sync version for backward compatibility)
+     * @deprecated Use async initialize() instead
+     */
+    initializeSync(): Result<void, string>;
+    /**
+     * Send a notification through this channel (Channel interface)
+     * Returns message ID on success for tracking replies
+     */
+    send(notification: ChannelNotification): Promise<Result<string, string>>;
     /**
      * Send an email
      */
@@ -57,9 +82,9 @@ export declare class EmailClient {
      */
     sendConfirmation(sessionId: string): Promise<Result<string, string>>;
     /**
-     * Start polling for incoming emails
+     * Start polling for incoming emails (Channel interface)
      */
-    startPolling(callback: (message: ParsedSMS) => void): void;
+    startPolling(callback: ResponseCallback): void;
     /**
      * Check for new emails via IMAP
      */

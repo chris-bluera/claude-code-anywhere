@@ -93,6 +93,33 @@ export function loadEmailConfig() {
     };
 }
 /**
+ * Load Telegram configuration from environment variables
+ * Returns success: false if TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing
+ */
+export function loadTelegramConfig() {
+    const botToken = process.env['TELEGRAM_BOT_TOKEN'];
+    const chatId = process.env['TELEGRAM_CHAT_ID'];
+    if (botToken === undefined || botToken === '') {
+        return {
+            success: false,
+            error: 'Missing required environment variable: TELEGRAM_BOT_TOKEN',
+        };
+    }
+    if (chatId === undefined || chatId === '') {
+        return {
+            success: false,
+            error: 'Missing required environment variable: TELEGRAM_CHAT_ID',
+        };
+    }
+    return {
+        success: true,
+        data: {
+            botToken,
+            chatId,
+        },
+    };
+}
+/**
  * Load full application configuration
  */
 export function loadAppConfig() {

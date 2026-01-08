@@ -1,7 +1,7 @@
 /**
- * Email Bridge Server - HTTP server for Claude Code email integration
+ * Bridge Server - HTTP server for Claude Code multi-channel notifications
  *
- * Uses Gmail SMTP/IMAP for sending and receiving messages.
+ * Supports multiple channels: Email (SMTP/IMAP), Telegram
  */
 /**
  * Bridge server instance
@@ -9,6 +9,7 @@
 export declare class BridgeServer {
     private server;
     private emailClient;
+    private channelManager;
     private startTime;
     private readonly port;
     constructor(port?: number);
@@ -17,9 +18,9 @@ export declare class BridgeServer {
      */
     start(): Promise<void>;
     /**
-     * Handle incoming message from email
+     * Handle incoming response from any channel
      */
-    private handleIncomingMessage;
+    private handleIncomingResponse;
     /**
      * Stop the server
      */

@@ -156,11 +156,7 @@ program
     console.log(`Sending test email to ${recipient}...`);
     try {
         const client = new EmailClient(configResult.data);
-        const initResult = client.initialize();
-        if (!initResult.success) {
-            console.error(`Error initializing: ${initResult.error}`);
-            process.exit(1);
-        }
+        await client.initialize();
         const result = await client.sendEmail('Test from Claude Code', 'Test message from Claude Code Email Bridge. Your setup is working!\n\nYou can reply to this email to test bidirectional communication.');
         if (result.success) {
             console.log('Test email sent successfully!');
