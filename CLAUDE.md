@@ -42,10 +42,8 @@ This file is YOUR (Claude's) project memory. It is NOT user documentation. It is
 
 **`dist/` MUST be committed to git** - This is intentional, not an oversight:
 
-1. **Claude Code plugins are copied to a cache during installation** - no build step runs
-   - Plugins need pre-built files ready to execute immediately
-
-2. **npm publishing also uses committed dist/** - No `files` array in package.json, so npm includes whatever isn't in `.gitignore`
+- **Claude Code plugins are copied to a cache during installation** - no build step runs
+- Plugins need pre-built files ready to execute immediately
 
 **After any code change:**
 1. Run `bun run build` (or `bun run precommit` which includes build)

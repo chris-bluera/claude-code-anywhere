@@ -1,11 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun run build:*)",
-      "Bash(bun run lint:*)",
-      "Bash(bun run test:*)",
-      "Bash(bun run typecheck:*)",
-      "Bash(bun run precommit:*)",
+      "Bash(bun run:*)",
       "Bash(bun install)"
     ]
   },
