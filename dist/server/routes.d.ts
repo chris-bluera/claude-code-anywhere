@@ -54,6 +54,11 @@ export declare function handleEnableGlobal(_req: IncomingMessage, res: ServerRes
  */
 export declare function handleDisableGlobal(_req: IncomingMessage, res: ServerResponse): void;
 /**
+ * Handle GET /api/active - Check if notifications are active for a session
+ * Returns active: true if global is enabled OR if the specific session is enabled
+ */
+export declare function handleCheckActive(_req: IncomingMessage, res: ServerResponse, sessionId: string): void;
+/**
  * Handle GET /api/status - Server status
  */
 export declare function handleStatus(_req: IncomingMessage, res: ServerResponse, ctx: RouteContext): void;

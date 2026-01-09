@@ -360,6 +360,32 @@ export function handleDisableGlobal(_req: IncomingMessage, res: ServerResponse):
 }
 
 /**
+ * Handle GET /api/active - Check if notifications are active for a session
+ * Returns active: true if global is enabled OR if the specific session is enabled
+ */
+export function handleCheckActive(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  sessionId: string
+): void {
+  // If global is enabled, always active
+  if (stateManager.isEnabled()) {
+    sendJSON(res, 200, { active: true });
+    return;
+  }
+
+  // If no session ID or session doesn't exist, not active
+  if (!sessionId || !sessionManager.hasSession(sessionId)) {
+    sendJSON(res, 200, { active: false });
+    return;
+  }
+
+  // Check session-specific enabled state
+  const active = sessionManager.isSessionEnabled(sessionId);
+  sendJSON(res, 200, { active });
+}
+
+/**
  * Handle GET /api/status - Server status
  */
 export function handleStatus(_req: IncomingMessage, res: ServerResponse, ctx: RouteContext): void {
@@ -389,6 +415,7 @@ export function handleRoot(_req: IncomingMessage, res: ServerResponse): void {
       'GET /api/session/:id/enabled - Check if session enabled',
       'POST /api/enable - Enable globally',
       'POST /api/disable - Disable globally',
+      'GET /api/active?sessionId=xxx - Check if active for session',
       'GET /api/status - Server status',
     ],
   });

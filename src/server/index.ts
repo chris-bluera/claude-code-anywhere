@@ -19,6 +19,7 @@ import {
   handleCheckSessionEnabled,
   handleEnableGlobal,
   handleDisableGlobal,
+  handleCheckActive,
   handleStatus,
   handleRoot,
   type RouteContext,
@@ -281,6 +282,13 @@ export class BridgeServer {
       // POST /api/disable
       if (path === '/api/disable' && method === 'POST') {
         handleDisableGlobal(req, res);
+        return;
+      }
+
+      // GET /api/active?sessionId=xxx
+      if (path === '/api/active' && method === 'GET') {
+        const sessionId = url.searchParams.get('sessionId') ?? '';
+        handleCheckActive(req, res, sessionId);
         return;
       }
 

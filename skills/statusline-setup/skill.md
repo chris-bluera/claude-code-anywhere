@@ -10,8 +10,8 @@ Intelligently inject notify on/off indicator into any user's statusline.sh.
 
 ## Indicator Format
 
-- `NOTIFY` (green \033[32m) when notify server is running
-- `notify` (dim gray \033[90m) when notify server is off
+- `NOTIFY` (green \033[32m) when notifications are active (global enabled OR session enabled)
+- `notify` (dim gray \033[90m) when notifications are inactive for this session
 
 ## Code Block to Inject
 
@@ -21,8 +21,14 @@ This exact block must be inserted:
 # --- claude-code-anywhere notify status ---
 NOTIFY_STATUS=""
 _NOTIFY_PORT=$(cat ~/.claude-code-anywhere/plugins/claude-code-anywhere/port 2>/dev/null)
-if [ -n "$_NOTIFY_PORT" ] && curl -s --max-time 0.3 "http://localhost:$_NOTIFY_PORT/api/status" >/dev/null 2>&1; then
-    NOTIFY_STATUS=$(printf " │ \033[32mNOTIFY\033[0m")
+_SESSION_ID=$(cat ~/.config/claude-code-anywhere/current-session-id 2>/dev/null)
+if [ -n "$_NOTIFY_PORT" ] && [ -n "$_SESSION_ID" ]; then
+    _ACTIVE=$(curl -s --max-time 0.3 "http://localhost:$_NOTIFY_PORT/api/active?sessionId=$_SESSION_ID" 2>/dev/null | grep -o '"active":true')
+    if [ -n "$_ACTIVE" ]; then
+        NOTIFY_STATUS=$(printf " │ \033[32mNOTIFY\033[0m")
+    else
+        NOTIFY_STATUS=$(printf " │ \033[90mnotify\033[0m")
+    fi
 else
     NOTIFY_STATUS=$(printf " │ \033[90mnotify\033[0m")
 fi

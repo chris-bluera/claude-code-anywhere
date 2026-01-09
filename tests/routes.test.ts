@@ -1018,6 +1018,108 @@ describe('handleDisableGlobal', () => {
   });
 });
 
+describe('handleCheckActive', () => {
+  let sessionManager: {
+    hasSession: Mock;
+    isSessionEnabled: Mock;
+  };
+  let stateManager: { isEnabled: Mock };
+
+  beforeEach(async () => {
+    vi.resetModules();
+    const sessionsMod = await import('../src/server/sessions.js');
+    const stateMod = await import('../src/server/state.js');
+    sessionManager = sessionsMod.sessionManager as typeof sessionManager;
+    stateManager = stateMod.stateManager as typeof stateManager;
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns active:true when global is enabled (regardless of session)', async () => {
+    const { handleCheckActive } = await import('../src/server/routes.js');
+
+    stateManager.isEnabled.mockReturnValue(true);
+    // Session state doesn't matter when global is enabled
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    handleCheckActive(req, res, 'any-session-id');
+
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as { active: boolean };
+    expect(body.active).toBe(true);
+  });
+
+  it('returns active:true when session is enabled (global disabled)', async () => {
+    const { handleCheckActive } = await import('../src/server/routes.js');
+
+    stateManager.isEnabled.mockReturnValue(false);
+    sessionManager.hasSession.mockReturnValue(true);
+    sessionManager.isSessionEnabled.mockReturnValue(true);
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    handleCheckActive(req, res, 'enabled-session');
+
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as { active: boolean };
+    expect(body.active).toBe(true);
+  });
+
+  it('returns active:false when session disabled and global disabled', async () => {
+    const { handleCheckActive } = await import('../src/server/routes.js');
+
+    stateManager.isEnabled.mockReturnValue(false);
+    sessionManager.hasSession.mockReturnValue(true);
+    sessionManager.isSessionEnabled.mockReturnValue(false);
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    handleCheckActive(req, res, 'disabled-session');
+
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as { active: boolean };
+    expect(body.active).toBe(false);
+  });
+
+  it('returns active:false when session not found and global disabled', async () => {
+    const { handleCheckActive } = await import('../src/server/routes.js');
+
+    stateManager.isEnabled.mockReturnValue(false);
+    sessionManager.hasSession.mockReturnValue(false);
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    handleCheckActive(req, res, 'nonexistent-session');
+
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as { active: boolean };
+    expect(body.active).toBe(false);
+  });
+
+  it('returns active:false when no sessionId provided and global disabled', async () => {
+    const { handleCheckActive } = await import('../src/server/routes.js');
+
+    stateManager.isEnabled.mockReturnValue(false);
+
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    handleCheckActive(req, res, '');
+
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as { active: boolean };
+    expect(body.active).toBe(false);
+  });
+});
+
 describe('handleSendEmail edge cases', () => {
   let sessionManager: {
     hasSession: Mock;
