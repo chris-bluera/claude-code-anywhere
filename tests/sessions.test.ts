@@ -202,6 +202,54 @@ describe('SessionManager', () => {
     });
   });
 
+  describe('session isolation (per-session vs global)', () => {
+    it('enabling one session does not affect other sessions', () => {
+      // Setup: Two sessions, both disabled
+      sessionManager.registerSession('session-A', 'Notification', 'prompt A');
+      sessionManager.registerSession('session-B', 'Notification', 'prompt B');
+      sessionManager.disableSession('session-A');
+      sessionManager.disableSession('session-B');
+
+      // Action: Enable session A only
+      sessionManager.enableSession('session-A');
+
+      // Assert: Session A enabled, Session B still disabled
+      expect(sessionManager.isSessionEnabled('session-A')).toBe(true);
+      expect(sessionManager.isSessionEnabled('session-B')).toBe(false);
+    });
+
+    it('disabling one session does not affect other sessions', () => {
+      // Setup: Two sessions, both enabled
+      sessionManager.registerSession('session-A', 'Notification', 'prompt A');
+      sessionManager.registerSession('session-B', 'Notification', 'prompt B');
+
+      // Action: Disable session A only
+      sessionManager.disableSession('session-A');
+
+      // Assert: Session A disabled, Session B still enabled
+      expect(sessionManager.isSessionEnabled('session-A')).toBe(false);
+      expect(sessionManager.isSessionEnabled('session-B')).toBe(true);
+    });
+
+    it('each session maintains independent enabled state', () => {
+      // Setup: Three sessions with different states
+      sessionManager.registerSession('session-1', 'Notification', 'prompt 1');
+      sessionManager.registerSession('session-2', 'Notification', 'prompt 2');
+      sessionManager.registerSession('session-3', 'Notification', 'prompt 3');
+
+      // Mix of enabled/disabled states
+      sessionManager.disableSession('session-1');
+      // session-2 stays enabled (default)
+      sessionManager.disableSession('session-3');
+      sessionManager.enableSession('session-3');
+
+      // Assert each session's state is independent
+      expect(sessionManager.isSessionEnabled('session-1')).toBe(false);
+      expect(sessionManager.isSessionEnabled('session-2')).toBe(true);
+      expect(sessionManager.isSessionEnabled('session-3')).toBe(true);
+    });
+  });
+
   describe('getSessionCount and getPendingResponseCount', () => {
     it('returns 0 when empty', () => {
       expect(sessionManager.getSessionCount()).toBe(0);

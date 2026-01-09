@@ -1,6 +1,6 @@
 ---
 description: Toggle notifications on/off or check status
-argument-hint: on | off | status | install | uninstall
+argument-hint: on | off | on all | off all | status | install | uninstall
 allowed-tools:
   - Bash(.claude/cpr.sh *)
   - Bash(curl * http://localhost:*/api/*)
@@ -36,41 +36,43 @@ See @skills/notify-server/skill.md for implementation details.
 
 ## Usage
 
-### Basic Commands
-- `/notify on` - Start server and enable notifications (this session)
-- `/notify off` - Stop server and disable notifications (this session)
+### Per-Session Commands
+- `/notify on` - Enable notifications for **this session only**
+- `/notify off` - Disable notifications for **this session only** (server keeps running)
 - `/notify status` - Show current status
 
-### Global Installation
-- `/notify install` - Install global mode (all sessions get notifications)
+### Global Commands
+- `/notify on all` - Enable notifications **globally** (all sessions)
+- `/notify off all` - Disable notifications **globally** and stop server
+- `/notify install` - Install global mode (all Claude Code sessions get notifications)
 - `/notify uninstall` - Remove global installation
-- `/notify on --global` - Alias for `/notify install`
-- `/notify off --global` - Stop global daemon (keeps shim installed)
 
 ## Workflow
 
-### `on`
+### `on` (current session only)
 1. Check plugin root (see context above)
 2. If "NOT_CONFIGURED": Run `@skills/bootstrap/skill.md` first, then retry
-3. Check if server running
+3. Check if server running (from Server Status context above)
 4. If not running, start it: `cd "<plugin-root>" && nohup bun run server > /tmp/claude-code-anywhere-server.log 2>&1 &`
-5. Wait for ready, then enable session
-6. Confirm with channel status (see `status` workflow below for format)
+5. Wait for server to be ready (poll `/api/status` until it responds)
+6. Enable this session only: `curl -X POST http://localhost:$PORT/api/session/$CLAUDE_SESSION_ID/enable`
+7. Confirm with channel status (see `status` workflow below for format)
 
-### `on --global`
-Same as `/notify install` - see below.
+### `on all` (global)
+1. Check plugin root (same as `on` steps 1-2)
+2. Check if server running, start if needed (same as `on` steps 3-5)
+3. Enable globally: `curl -X POST http://localhost:$PORT/api/enable`
+4. Confirm with channel status
 
-### `off`
-1. Disable session
-2. Stop server
-3. Confirm with final channel status before stopping (see `status` workflow below for format)
+### `off` (current session only)
+1. Disable this session only: `curl -X POST http://localhost:$PORT/api/session/$CLAUDE_SESSION_ID/disable`
+2. **Do NOT stop the server** (other sessions may still be active)
+3. Confirm with status showing session disabled
 
-### `off --global`
-1. Stop the global daemon:
-   - macOS: `launchctl unload ~/Library/LaunchAgents/com.claude.code-anywhere.plist`
-   - Linux: `systemctl --user stop claude-code-anywhere.service`
-2. Note: This keeps the shim installed for easy re-enable
-3. To fully remove, use `/notify uninstall`
+### `off all` (global)
+1. Disable globally: `curl -X POST http://localhost:$PORT/api/disable`
+2. Stop server: `pkill -f "bun run server"`
+3. Confirm server stopped
 
 ### `status`
 Report from context above:

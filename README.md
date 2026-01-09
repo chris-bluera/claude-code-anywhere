@@ -64,7 +64,7 @@ When Claude Code needs your input—a question, approval, or notification—you 
 | **Multi-Channel** | Email, Telegram, or both simultaneously |
 | **Bidirectional** | Send notifications AND receive replies |
 | **Multi-Session** | Track multiple Claude Code sessions independently |
-| **Easy Toggle** | `/notify on` and `/notify off` |
+| **Easy Toggle** | `/notify on`/`off` (per-session) or `/notify on all`/`off all` (global) |
 | **Provider Flexible** | Any SMTP/IMAP email provider |
 | **85% Test Coverage** | Production-ready with comprehensive tests |
 
@@ -144,9 +144,10 @@ On first session, you'll see a one-time message explaining the two notification 
 <summary><b>What's the difference?</b></summary>
 
 **Session-Only (default):**
-- Notifications work in sessions where you run `/notify on`
-- Each terminal/IDE needs its own `/notify on`
-- Server stops when you close the session
+- `/notify on` enables notifications for the current session only
+- `/notify off` disables only the current session (server keeps running for others)
+- Use `/notify on all` or `/notify off all` for global enable/disable
+- Server can be shared across multiple sessions
 
 **Global:**
 - Notifications work in ALL Claude sessions automatically
@@ -337,12 +338,14 @@ Show current server and channel status.
 
 ### `/notify on`
 
-Start the bridge server and enable notifications.
+Enable notifications for the **current session only**. Starts the server if not already running.
+
+Use `/notify on all` to enable notifications **globally** (all sessions).
 
 <details>
 <summary><b>Example output</b></summary>
 
-Notifications enabled.
+Notifications enabled for this session.
 
 **Notification Status**
 
@@ -366,12 +369,14 @@ Notifications enabled.
 
 ### `/notify off`
 
-Stop the bridge server and disable notifications (this session).
+Disable notifications for the **current session only**. The server keeps running for other sessions.
+
+Use `/notify off all` to disable notifications **globally** and stop the server.
 
 <details>
 <summary><b>Example output</b></summary>
 
-Notifications disabled. Server stopped.
+Notifications disabled for this session. Server still running for other sessions.
 
 </details>
 
