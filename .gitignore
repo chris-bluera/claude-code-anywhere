@@ -44,3 +44,4 @@ port
 
 # Bun
 .bun/
+.bluera/
