@@ -1,6 +1,7 @@
 ---
 description: Diagnose Claude Code Anywhere installation and configuration
 allowed-tools:
+  - Bash(${CLAUDE_PLUGIN_ROOT}/scripts/server-status.sh *)
   - Bash(which -a claude)
   - Bash(curl * http://localhost:*/api/*)
   - Bash(cat */port)
@@ -39,9 +40,8 @@ test -f ~/.claude-code-anywhere/bin/claude && echo "global" || echo "not-global"
 ```
 
 ```bash
-# Check server status (reads dynamic port - fails if no port file)
-PORT=$(cat ~/.claude-code-anywhere/plugins/claude-code-anywhere/port 2>/dev/null || cat "${CLAUDE_PLUGIN_ROOT:-./}"/port 2>/dev/null)
-[ -n "$PORT" ] && curl -s --max-time 2 http://localhost:$PORT/api/status 2>/dev/null || echo '{"running": false, "error": "no port file"}'
+# Check server status
+${CLAUDE_PLUGIN_ROOT}/scripts/server-status.sh
 ```
 
 Based on results:
