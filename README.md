@@ -128,7 +128,11 @@ sequenceDiagram
 ### 1. Install the Plugin
 
 ```bash
-claude /plugin add github.com/blueraai/claude-code-anywhere
+# Add the Bluera marketplace (one-time setup)
+/plugin marketplace add blueraai/bluera-marketplace
+
+# Install the plugin (or use /plugin to browse the UI)
+/plugin install claude-code-anywhere@bluera
 ```
 
 ### 2. Choose Your Mode
@@ -164,7 +168,7 @@ To enable global mode:
 ### 3. Configure Channels
 
 Copy `.env.example` to `.env` and configure:
-- **Session-only mode**: In the plugin directory (where `/plugin add` installed it)
+- **Session-only mode**: In the plugin directory (where `/plugin install` installed it)
 - **Global mode**: `~/.claude-code-anywhere/plugins/claude-code-anywhere/.env`
 
 **Email:**
