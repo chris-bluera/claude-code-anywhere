@@ -6,10 +6,7 @@
     "name": "Bluera",
     "email": "contact@bluera.ai"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/blueraai/claude-code-anywhere"
-  },
+  "repository": "https://github.com/blueraai/claude-code-anywhere",
   "license": "MIT",
   "keywords": [
     "notifications",
