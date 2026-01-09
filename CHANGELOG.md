@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.4](https://github.com/blueraai/claude-code-anywhere/compare/v0.4.3...v0.4.4) (2026-01-09)
+
+
+### Bug Fixes
+
+* **plugin:** use string format for repository field ([24316c3](https://github.com/blueraai/claude-code-anywhere/commit/24316c3dd26cc1ca9a7bf2f700f4cdc93bbfb479))
+
 ## [0.4.3](https://github.com/blueraai/claude-code-anywhere/compare/v0.4.2...v0.4.3) (2026-01-09)
 
 ## [0.4.2](https://github.com/blueraai/claude-code-anywhere/compare/v0.4.1...v0.4.2) (2026-01-09)
