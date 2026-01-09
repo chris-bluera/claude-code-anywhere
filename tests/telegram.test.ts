@@ -944,3 +944,547 @@ describe('TelegramClient - polling error propagation (fail-fast)', () => {
     client.stopPolling();
   });
 });
+
+describe('TelegramClient - Inline Keyboard', () => {
+  const validConfig: TelegramConfig = {
+    botToken: 'test-bot-token',
+    chatId: '123456789',
+  };
+
+  let mockAxiosInstance: {
+    get: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    mockAxiosInstance = {
+      get: vi.fn(),
+      post: vi.fn(),
+    };
+    mockAxiosCreate.mockReturnValue(mockAxiosInstance as unknown as AxiosInstance);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('send with inline keyboard', () => {
+    it('includes inline keyboard for PreToolUse events', async () => {
+      mockAxiosInstance.get.mockResolvedValue({
+        data: { ok: true, result: { id: 123, username: 'testbot' } },
+      });
+      mockAxiosInstance.post.mockResolvedValue({
+        data: { ok: true, result: { message_id: 456 } },
+      });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      await client.send({
+        sessionId: 'abc123',
+        event: 'PreToolUse',
+        title: 'Approve?',
+        message: 'Execute: git status',
+      });
+
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/sendMessage', {
+        chat_id: '123456789',
+        text: expect.any(String),
+        parse_mode: 'MarkdownV2',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '\u2705 YES', callback_data: 'approve:abc123' },
+              { text: '\u274C NO', callback_data: 'deny:abc123' },
+            ],
+          ],
+        },
+      });
+    });
+
+    it('does NOT include inline keyboard for Notification events', async () => {
+      mockAxiosInstance.get.mockResolvedValue({
+        data: { ok: true, result: { id: 123, username: 'testbot' } },
+      });
+      mockAxiosInstance.post.mockResolvedValue({
+        data: { ok: true, result: { message_id: 456 } },
+      });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      await client.send({
+        sessionId: 'abc123',
+        event: 'Notification',
+        title: 'Info',
+        message: 'Task completed',
+      });
+
+      const callArg = mockAxiosInstance.post.mock.calls[0][1];
+      expect(callArg).not.toHaveProperty('reply_markup');
+    });
+
+    it('does NOT include inline keyboard for Stop events', async () => {
+      mockAxiosInstance.get.mockResolvedValue({
+        data: { ok: true, result: { id: 123, username: 'testbot' } },
+      });
+      mockAxiosInstance.post.mockResolvedValue({
+        data: { ok: true, result: { message_id: 456 } },
+      });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      await client.send({
+        sessionId: 'abc123',
+        event: 'Stop',
+        title: 'Done',
+        message: 'Session ended',
+      });
+
+      const callArg = mockAxiosInstance.post.mock.calls[0][1];
+      expect(callArg).not.toHaveProperty('reply_markup');
+    });
+  });
+
+  describe('callback query handling', () => {
+    it('handles approve callback and returns "yes" response', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-123',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-123',
+                  data: 'approve:abc123',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await vi.waitFor(() => {
+        expect(callback).toHaveBeenCalled();
+      });
+
+      expect(callback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 'abc123',
+          response: 'yes',
+          channel: 'telegram',
+          from: 'testuser',
+        })
+      );
+
+      client.stopPolling();
+    });
+
+    it('handles alphanumeric session IDs in callback data', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-alphanum',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-alphanum',
+                  data: 'approve:keyboard-test-001',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await vi.waitFor(() => {
+        expect(callback).toHaveBeenCalled();
+      });
+
+      expect(callback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 'keyboard-test-001',
+          response: 'yes',
+          channel: 'telegram',
+        })
+      );
+
+      client.stopPolling();
+    });
+
+    it('handles session IDs with underscores', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-underscore',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-underscore',
+                  data: 'deny:session_with_underscores_123',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await vi.waitFor(() => {
+        expect(callback).toHaveBeenCalled();
+      });
+
+      expect(callback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 'session_with_underscores_123',
+          response: 'no',
+          channel: 'telegram',
+        })
+      );
+
+      client.stopPolling();
+    });
+
+    it('handles deny callback and returns "no" response', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-456',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-456',
+                  data: 'deny:def456',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await vi.waitFor(() => {
+        expect(callback).toHaveBeenCalled();
+      });
+
+      expect(callback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 'def456',
+          response: 'no',
+          channel: 'telegram',
+        })
+      );
+
+      client.stopPolling();
+    });
+
+    it('calls answerCallbackQuery to acknowledge button press', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-ack',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-ack',
+                  data: 'approve:abc123',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await vi.waitFor(() => {
+        expect(callback).toHaveBeenCalled();
+      });
+
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/answerCallbackQuery', {
+        callback_query_id: 'callback-ack',
+      });
+
+      client.stopPolling();
+    });
+
+    it('calls editMessageReplyMarkup to remove buttons after callback', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-edit',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 200,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-edit',
+                  data: 'approve:abc123',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await vi.waitFor(() => {
+        expect(callback).toHaveBeenCalled();
+      });
+
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/editMessageReplyMarkup', {
+        chat_id: 123456789,
+        message_id: 200,
+        reply_markup: { inline_keyboard: [] },
+      });
+
+      client.stopPolling();
+    });
+
+    it('throws on invalid callback data format (fail fast)', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-bad',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-bad',
+                  data: 'invalid:format:data',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      // Wait for error to propagate
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Callback should not have been called
+      expect(callback).not.toHaveBeenCalled();
+
+      // Polling should have stopped due to error (fail fast)
+      const status = client.getStatus();
+      expect(status.error).toContain('Invalid callback data format');
+
+      client.stopPolling();
+    });
+
+    it('throws when callback data is missing (fail fast)', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-nodata',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 123456789, type: 'private' },
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-nodata',
+                  // data is missing
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      // Wait for error to propagate
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Callback should not have been called
+      expect(callback).not.toHaveBeenCalled();
+
+      // Polling should have stopped due to error (fail fast)
+      const status = client.getStatus();
+      expect(status.error).toContain('Callback query missing data');
+
+      client.stopPolling();
+    });
+
+    it('ignores callback from wrong chat but still acknowledges', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({
+          data: { ok: true, result: { id: 123, username: 'testbot' } },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            ok: true,
+            result: [
+              {
+                update_id: 1,
+                callback_query: {
+                  id: 'callback-wrongchat',
+                  from: { id: 999, username: 'testuser' },
+                  message: {
+                    message_id: 100,
+                    chat: { id: 999999999, type: 'private' }, // Wrong chat
+                    date: 1700000000,
+                  },
+                  chat_instance: 'instance-wrongchat',
+                  data: 'approve:abc123',
+                },
+              },
+            ],
+          },
+        })
+        .mockResolvedValue({ data: { ok: true, result: [] } });
+      mockAxiosInstance.post.mockResolvedValue({ data: { ok: true } });
+
+      const client = new TelegramClient(validConfig);
+      await client.initialize();
+
+      const callback = vi.fn();
+      client.startPolling(callback);
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Callback should NOT be called for wrong chat
+      expect(callback).not.toHaveBeenCalled();
+
+      // But answerCallbackQuery should still be called
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/answerCallbackQuery', {
+        callback_query_id: 'callback-wrongchat',
+      });
+
+      client.stopPolling();
+    });
+  });
+});

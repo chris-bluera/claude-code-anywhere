@@ -49,9 +49,24 @@ export declare class TelegramClient implements Channel {
      */
     startPolling(callback: ResponseCallback): void;
     /**
-     * Poll for new updates from Telegram
+     * Poll for new updates from Telegram (messages and callback queries)
      */
     private pollForUpdates;
+    /**
+     * Handle callback query from inline keyboard button press.
+     * Parses the callback data, acknowledges the query, edits the message,
+     * and emits the response to the channel callback.
+     */
+    private handleCallbackQuery;
+    /**
+     * Acknowledge a callback query (required by Telegram API).
+     * Dismisses the loading indicator on the button.
+     */
+    private answerCallbackQuery;
+    /**
+     * Edit a message to remove inline keyboard after user responds.
+     */
+    private editMessageAfterResponse;
     /**
      * Stop polling for messages (Channel interface)
      */

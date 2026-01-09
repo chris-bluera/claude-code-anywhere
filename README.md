@@ -128,11 +128,7 @@ sequenceDiagram
 ### 1. Install the Plugin
 
 ```bash
-# Add the Bluera marketplace (one-time setup)
-/plugin marketplace add blueraai/bluera-marketplace
-
-# Install the plugin (or use /plugin to browse the UI)
-/plugin install claude-code-anywhere@bluera
+claude /plugin add github.com/blueraai/claude-code-anywhere
 ```
 
 ### 2. Choose Your Mode
@@ -168,7 +164,7 @@ To enable global mode:
 ### 3. Configure Channels
 
 Copy `.env.example` to `.env` and configure:
-- **Session-only mode**: In the plugin directory (where `/plugin install` installed it)
+- **Session-only mode**: In the plugin directory (where `/plugin add` installed it)
 - **Global mode**: `~/.claude-code-anywhere/plugins/claude-code-anywhere/.env`
 
 **Email:**
@@ -298,11 +294,13 @@ TELEGRAM_CHAT_ID=123456789
 
 **Replying to Notifications**
 
-**Single session**: Just send a message — it links to the most recent notification.
+**Approval requests** (`PreToolUse` events): Tap the **YES** or **NO** button directly — no typing needed! The buttons encode the session ID, so they always target the correct session even with multiple concurrent sessions.
 
-**Multiple concurrent sessions**: Use Telegram's **reply feature** (swipe left on mobile, or right-click → Reply on desktop) to target the correct session. Without explicit reply, your message goes to whichever session sent the most recent notification.
+**Other notifications**: Send a text message to respond.
+- **Single session**: Just send a message — it links to the most recent notification.
+- **Multiple concurrent sessions**: Use Telegram's **reply feature** (swipe left on mobile, or right-click → Reply on desktop) to target the correct session. Without explicit reply, your message goes to whichever session sent the most recent notification.
 
-> **Why the difference from Email?** Email automatically threads via subject line (`[CC-xxx]`) and In-Reply-To headers. Telegram doesn't have threading, so it relies on explicit replies or the `[CC-xxx]` prefix in your message.
+> **Why the difference from Email?** Email automatically threads via subject line (`[CC-xxx]`) and In-Reply-To headers. Telegram doesn't have threading for regular messages, so it relies on inline keyboard buttons for approvals, or explicit replies / `[CC-xxx]` prefix for text responses.
 
 </details>
 

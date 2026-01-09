@@ -73,6 +73,38 @@ function escapeMarkdown(text) {
     return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
 }
 /**
+ * Parse callback data from inline keyboard button press.
+ * Format: "action:sessionId" where action is "approve" or "deny".
+ * Session IDs can contain alphanumeric chars, hyphens, and underscores.
+ * Throws if format is invalid (fail fast).
+ */
+function parseCallbackData(data) {
+    const match = data.match(/^(approve|deny):([a-zA-Z0-9_-]+)$/i);
+    const actionStr = match?.[1];
+    const sessionId = match?.[2];
+    if (actionStr === undefined || sessionId === undefined) {
+        throw new Error(`Invalid callback data format: ${data}`);
+    }
+    const actionLower = actionStr.toLowerCase();
+    if (actionLower !== 'approve' && actionLower !== 'deny') {
+        throw new Error(`Invalid callback action: ${actionStr}`);
+    }
+    return { action: actionLower, sessionId };
+}
+/**
+ * Build inline keyboard markup for PreToolUse approval
+ */
+function buildApprovalKeyboard(sessionId) {
+    return {
+        inline_keyboard: [
+            [
+                { text: '\u2705 YES', callback_data: `approve:${sessionId}` },
+                { text: '\u274C NO', callback_data: `deny:${sessionId}` },
+            ],
+        ],
+    };
+}
+/**
  * Telegram client for sending and receiving messages
  * Implements the Channel interface for multi-channel support
  */
@@ -153,12 +185,18 @@ export class TelegramClient {
             return { success: false, error: 'Telegram client not initialized' };
         }
         const text = formatTelegramMessage(notification.sessionId, notification.event, notification.message);
+        // Build request body with optional inline keyboard for PreToolUse
+        const requestBody = {
+            chat_id: this.config.chatId,
+            text,
+            parse_mode: 'MarkdownV2',
+        };
+        // Add inline keyboard for PreToolUse events (approval buttons)
+        if (notification.event === 'PreToolUse') {
+            requestBody.reply_markup = buildApprovalKeyboard(notification.sessionId);
+        }
         try {
-            const response = await this.client.post('/sendMessage', {
-                chat_id: this.config.chatId,
-                text,
-                parse_mode: 'MarkdownV2',
-            });
+            const response = await this.client.post('/sendMessage', requestBody);
             if (!response.data.ok || !response.data.result) {
                 const errorMsg = response.data.description ?? 'Unknown error';
                 this.lastError = errorMsg;
@@ -225,7 +263,7 @@ export class TelegramClient {
         }, TELEGRAM_POLL_INTERVAL_MS);
     }
     /**
-     * Poll for new updates from Telegram
+     * Poll for new updates from Telegram (messages and callback queries)
      */
     async pollForUpdates() {
         if (this.client === null || this.messageCallback === null || this.isPolling) {
@@ -237,7 +275,7 @@ export class TelegramClient {
                 params: {
                     offset: this.lastUpdateId + 1,
                     timeout: TELEGRAM_POLL_TIMEOUT_SECONDS,
-                    allowed_updates: ['message'],
+                    allowed_updates: ['message', 'callback_query'],
                 },
             });
             if (!response.data.ok || !response.data.result) {
@@ -245,6 +283,12 @@ export class TelegramClient {
             }
             for (const update of response.data.result) {
                 this.lastUpdateId = update.update_id;
+                // Handle callback_query (inline keyboard button press)
+                if (update.callback_query) {
+                    await this.handleCallbackQuery(update.callback_query);
+                    continue;
+                }
+                // Handle regular text messages
                 if (update.message?.text === undefined || update.message.text === '') {
                     continue;
                 }
@@ -319,6 +363,99 @@ export class TelegramClient {
         finally {
             this.isPolling = false;
         }
+    }
+    /**
+     * Handle callback query from inline keyboard button press.
+     * Parses the callback data, acknowledges the query, edits the message,
+     * and emits the response to the channel callback.
+     */
+    async handleCallbackQuery(callbackQuery) {
+        if (this.client === null || this.messageCallback === null) {
+            throw new Error('Telegram client not initialized');
+        }
+        const { id, from, message, data } = callbackQuery;
+        // Callback data is required
+        if (data === undefined) {
+            throw new Error('Callback query missing data');
+        }
+        // Only process from our configured chat
+        if (message !== undefined && String(message.chat.id) !== this.config.chatId) {
+            log.debug(`Ignoring callback from chat ${String(message.chat.id)}`);
+            await this.answerCallbackQuery(id);
+            return;
+        }
+        // Parse callback data (throws on invalid format - fail fast)
+        const { action, sessionId } = parseCallbackData(data);
+        // Map action to response text
+        const responseText = action === 'approve' ? 'yes' : 'no';
+        log.info('Received callback query', {
+            from: from.username ?? String(from.id),
+            sessionId,
+            action,
+        });
+        // Acknowledge the callback (dismisses loading indicator)
+        // Note: This can fail if callback is too old (Telegram 10-second window)
+        // We continue processing regardless since the response is what matters
+        try {
+            await this.answerCallbackQuery(id);
+        }
+        catch (error) {
+            const errMsg = error instanceof Error ? error.message : 'Unknown error';
+            log.warn(`Failed to acknowledge callback (may be stale): ${errMsg}`);
+        }
+        // Edit message to remove buttons after response
+        // Note: This can also fail for stale messages, but response is already captured
+        if (message !== undefined) {
+            try {
+                await this.editMessageAfterResponse(message.chat.id, message.message_id);
+            }
+            catch (error) {
+                const errMsg = error instanceof Error ? error.message : 'Unknown error';
+                log.warn(`Failed to remove inline keyboard: ${errMsg}`);
+            }
+        }
+        // Build and emit the channel response
+        const channelResponse = {
+            sessionId,
+            response: responseText,
+            from: from.username ?? String(from.id),
+            timestamp: Date.now(),
+            channel: this.name,
+        };
+        this.lastActivity = Date.now();
+        this.messageCallback(channelResponse);
+    }
+    /**
+     * Acknowledge a callback query (required by Telegram API).
+     * Dismisses the loading indicator on the button.
+     */
+    async answerCallbackQuery(callbackQueryId) {
+        if (this.client === null) {
+            throw new Error('Telegram client not initialized');
+        }
+        const response = await this.client.post('/answerCallbackQuery', {
+            callback_query_id: callbackQueryId,
+        });
+        if (!response.data.ok) {
+            throw new Error(response.data.description ?? 'Failed to answer callback query');
+        }
+    }
+    /**
+     * Edit a message to remove inline keyboard after user responds.
+     */
+    async editMessageAfterResponse(chatId, messageId) {
+        if (this.client === null) {
+            throw new Error('Telegram client not initialized');
+        }
+        const response = await this.client.post('/editMessageReplyMarkup', {
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: { inline_keyboard: [] },
+        });
+        if (!response.data.ok) {
+            throw new Error(response.data.description ?? 'Failed to edit message');
+        }
+        log.debug(`Removed inline keyboard from message ${String(messageId)}`);
     }
     /**
      * Stop polling for messages (Channel interface)
