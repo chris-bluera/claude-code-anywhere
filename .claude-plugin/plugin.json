@@ -1,6 +1,6 @@
 {
   "name": "claude-code-anywhere",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Email notifications and bidirectional communication for Claude Code",
   "author": {
     "name": "Bluera",
@@ -15,6 +15,5 @@
     "claude-code",
     "remote",
     "mobile"
-  ],
-  "hooks": "./hooks/hooks.json"
+  ]
 }
