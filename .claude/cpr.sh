@@ -19,7 +19,7 @@ if [ -f "${HOME}/.claude/plugins/installed_plugins.json" ] && command -v jq &>/d
 fi
 
 # 3. Try current directory (for --plugin-dir development)
-if [ -f "plugin.json" ] && grep -q "\"name\": \"$PLUGIN_NAME\"" plugin.json 2>/dev/null; then
+if [ -f ".claude-plugin/plugin.json" ] && grep -q "\"name\": \"$PLUGIN_NAME\"" .claude-plugin/plugin.json 2>/dev/null; then
     pwd
     exit 0
 fi

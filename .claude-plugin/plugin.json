@@ -19,6 +19,5 @@
     "remote",
     "mobile"
   ],
-  "commands": "./commands",
   "hooks": "./hooks/hooks.json"
 }

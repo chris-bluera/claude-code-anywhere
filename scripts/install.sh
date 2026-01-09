@@ -136,8 +136,8 @@ SHIM_EOF
 install_plugin() {
     echo -e "${YELLOW}→ Installing plugin...${NC}"
 
-    if [ ! -f "$REPO_DIR/plugin.json" ]; then
-        echo -e "${RED}❌ Error: plugin.json not found in $REPO_DIR${NC}"
+    if [ ! -f "$REPO_DIR/.claude-plugin/plugin.json" ]; then
+        echo -e "${RED}❌ Error: .claude-plugin/plugin.json not found in $REPO_DIR${NC}"
         echo "Please run this script from the claude-code-anywhere repository."
         exit 1
     fi
@@ -146,7 +146,8 @@ install_plugin() {
     mkdir -p "$PLUGIN_DIR"
 
     # Copy essential plugin files
-    cp -r "$REPO_DIR/plugin.json" "$PLUGIN_DIR/"
+    mkdir -p "$PLUGIN_DIR/.claude-plugin"
+    cp -r "$REPO_DIR/.claude-plugin/plugin.json" "$PLUGIN_DIR/.claude-plugin/"
     cp -r "$REPO_DIR/hooks" "$PLUGIN_DIR/"
     cp -r "$REPO_DIR/commands" "$PLUGIN_DIR/"
     cp -r "$REPO_DIR/skills" "$PLUGIN_DIR/"
@@ -316,7 +317,7 @@ write_manifest() {
 
     cat > "$MANIFEST_FILE" << MANIFEST_EOF
 {
-  "version": "$(jq -r '.version' "$REPO_DIR/plugin.json")",
+  "version": "$(jq -r '.version' "$REPO_DIR/.claude-plugin/plugin.json")",
   "installed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "shim_path": "$SHIM_DIR/claude",
   "plugin_path": "$PLUGIN_DIR",

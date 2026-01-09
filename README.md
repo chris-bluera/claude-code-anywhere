@@ -708,7 +708,8 @@ bun run build
 
 ```
 claude-code-anywhere/
-├── plugin.json               # Plugin manifest
+├── .claude-plugin/
+│   └── plugin.json           # Plugin manifest (canonical location)
 ├── commands/
 │   ├── notify.md             # /notify command
 │   ├── notify-install.md     # /notify install command

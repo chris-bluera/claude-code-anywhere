@@ -24,7 +24,7 @@ Before committing, evaluate if changes need documentation updates.
 
 **Trigger files → check README.md:**
 - `src/cli.ts` - CLI command surface
-- `plugin/plugin.json` - Plugin metadata
+- `.claude-plugin/plugin.json` - Plugin metadata
 - `src/shared/config.ts` - Configuration
 
 ### CLAUDE.md (Claude Code memory - hierarchical)
