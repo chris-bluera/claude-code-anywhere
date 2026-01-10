@@ -32,10 +32,10 @@ if [ -z "$SESSION_ID" ]; then
   exit 0
 fi
 
-# Check if session is enabled
-ENABLED=$(curl -s -X GET "$BRIDGE_URL/api/session/${SESSION_ID}/enabled" 2>/dev/null)
-if ! echo "$ENABLED" | grep -q '"enabled":true'; then
-  # Session not enabled, allow the tool
+# Check if notifications are active for this session (global OR session-specific)
+ACTIVE=$(curl -s "$BRIDGE_URL/api/active?sessionId=${SESSION_ID}" 2>/dev/null)
+if ! echo "$ACTIVE" | grep -q '"active":true'; then
+  # Notifications not active, allow the tool without approval
   exit 0
 fi
 

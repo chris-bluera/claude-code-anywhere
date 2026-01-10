@@ -350,6 +350,9 @@ describe('pretooluse.sh approval patterns', () => {
   });
 });
 
+// TODO: Add sticky-enabled tests when implementing --continue support
+// See: SessionStart sticky-enabled feature (claude --continue support)
+
 describe('hook scripts use canonical port path (regression tests)', () => {
   // These tests ensure hook scripts read from ~/.config/claude-code-anywhere/port
   // NOT from relative paths like $SCRIPT_DIR/../../port which fail when

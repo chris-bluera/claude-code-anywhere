@@ -17,7 +17,6 @@ import {
   handleGetResponse,
   handleEnableSession,
   handleDisableSession,
-  handleCheckSessionEnabled,
   handleEnableGlobal,
   handleDisableGlobal,
   handleCheckActive,
@@ -277,17 +276,6 @@ export class BridgeServer {
           throw new Error('Unexpected: sessionId undefined after regex match');
         }
         handleDisableSession(req, res, sessionId);
-        return;
-      }
-
-      // GET /api/session/:id/enabled
-      const enabledMatch = path.match(/^\/api\/session\/([a-f0-9-]+)\/enabled$/i);
-      if (enabledMatch !== null && method === 'GET') {
-        const sessionId = enabledMatch[1];
-        if (sessionId === undefined) {
-          throw new Error('Unexpected: sessionId undefined after regex match');
-        }
-        handleCheckSessionEnabled(req, res, sessionId);
         return;
       }
 

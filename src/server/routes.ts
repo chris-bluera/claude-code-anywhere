@@ -325,23 +325,6 @@ export function handleDisableSession(
 }
 
 /**
- * Handle GET /api/session/:id/enabled - Check if session is enabled
- */
-export function handleCheckSessionEnabled(
-  _req: IncomingMessage,
-  res: ServerResponse,
-  sessionId: string
-): void {
-  if (!sessionManager.hasSession(sessionId)) {
-    sendError(res, 404, 'Session not found');
-    return;
-  }
-  const enabled = sessionManager.isSessionEnabled(sessionId);
-  const globalEnabled = stateManager.isEnabled();
-  sendJSON(res, 200, { enabled: enabled && globalEnabled });
-}
-
-/**
  * Handle POST /api/enable - Enable globally
  */
 export function handleEnableGlobal(_req: IncomingMessage, res: ServerResponse): void {
@@ -410,7 +393,6 @@ export function handleRoot(_req: IncomingMessage, res: ServerResponse): void {
       'GET /api/response/:sessionId - Poll for response',
       'POST /api/session/:id/enable - Enable session',
       'POST /api/session/:id/disable - Disable session',
-      'GET /api/session/:id/enabled - Check if session enabled',
       'POST /api/enable - Enable globally',
       'POST /api/disable - Disable globally',
       'GET /api/active?sessionId=xxx - Check if active for session',

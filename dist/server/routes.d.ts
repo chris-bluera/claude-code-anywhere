@@ -43,10 +43,6 @@ export declare function handleEnableSession(_req: IncomingMessage, res: ServerRe
  */
 export declare function handleDisableSession(_req: IncomingMessage, res: ServerResponse, sessionId: string): void;
 /**
- * Handle GET /api/session/:id/enabled - Check if session is enabled
- */
-export declare function handleCheckSessionEnabled(_req: IncomingMessage, res: ServerResponse, sessionId: string): void;
-/**
  * Handle POST /api/enable - Enable globally
  */
 export declare function handleEnableGlobal(_req: IncomingMessage, res: ServerResponse): void;

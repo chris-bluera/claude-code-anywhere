@@ -10,7 +10,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { ChannelManager } from './channels.js';
 import { EmailClient } from './email.js';
-import { handleSendEmail, handleRegisterSession, handleGetResponse, handleEnableSession, handleDisableSession, handleCheckSessionEnabled, handleEnableGlobal, handleDisableGlobal, handleCheckActive, handleStatus, handleRoot, } from './routes.js';
+import { handleSendEmail, handleRegisterSession, handleGetResponse, handleEnableSession, handleDisableSession, handleEnableGlobal, handleDisableGlobal, handleCheckActive, handleStatus, handleRoot, } from './routes.js';
 import { sessionManager } from './sessions.js';
 import { TelegramClient } from './telegram.js';
 import { loadEmailConfig, loadTelegramConfig } from '../shared/config.js';
@@ -222,16 +222,6 @@ export class BridgeServer {
                     throw new Error('Unexpected: sessionId undefined after regex match');
                 }
                 handleDisableSession(req, res, sessionId);
-                return;
-            }
-            // GET /api/session/:id/enabled
-            const enabledMatch = path.match(/^\/api\/session\/([a-f0-9-]+)\/enabled$/i);
-            if (enabledMatch !== null && method === 'GET') {
-                const sessionId = enabledMatch[1];
-                if (sessionId === undefined) {
-                    throw new Error('Unexpected: sessionId undefined after regex match');
-                }
-                handleCheckSessionEnabled(req, res, sessionId);
                 return;
             }
             // POST /api/enable
