@@ -46,7 +46,7 @@ After running this command, tell the user:
 ## To Uninstall Later
 
 ```
-/cca uninstall
+/cca-uninstall
 ```
 
 Or manually: `bash ~/.claude-code-anywhere/plugins/claude-code-anywhere/scripts/uninstall.sh`

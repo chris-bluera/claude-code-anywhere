@@ -1,15 +1,15 @@
 ---
-description: Add or update status indicator in Claude Code statusline
-argument-hint: on | off
+description: Manage terminal status indicator in Claude Code statusline
+argument-hint: "[add|remove]"
 allowed-tools:
   - Read(~/.claude/statusline.sh)
   - Edit(~/.claude/statusline.sh)
   - Bash(head ~/.claude/statusline.sh *)
 ---
 
-# /statusline
+# /cca-statusline
 
-Add, update, or remove the status indicator from your Claude Code statusline.
+Add, update, or remove the CCA status indicator from your Claude Code statusline.
 
 **Action requested:** `$1`
 
@@ -19,14 +19,20 @@ Add, update, or remove the status indicator from your Claude Code statusline.
 
 ## Usage
 
-- `/statusline on` - Add or update status indicator
-- `/statusline off` - Remove status indicator
+- `/cca-statusline add` - Add or update status indicator
+- `/cca-statusline remove` - Remove status indicator
+
+## What It Shows
+
+Once added, your statusline will display:
+- **CCA** (green) - Notifications active (global enabled OR session enabled)
+- **cca** (dim gray) - Notifications inactive for this session
 
 ## Workflow
 
 See @skills/statusline-setup/skill.md for implementation details.
 
-### `on` (Idempotent - safe to run multiple times)
+### `add` (Idempotent - safe to run multiple times)
 
 1. Check if ~/.claude/statusline.sh exists (see context above)
 2. If "NOT_FOUND": inform user they need a statusline first
@@ -56,7 +62,7 @@ See @skills/statusline-setup/skill.md for implementation details.
 
 6. Confirm success with summary of actions taken
 
-### `off`
+### `remove`
 
 1. Check if ~/.claude/statusline.sh exists
 2. If "NOT_FOUND": inform user - nothing to remove

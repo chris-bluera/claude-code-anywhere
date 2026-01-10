@@ -4,7 +4,7 @@
 # This script runs on every session start. It:
 # 1. Checks if global installation is complete
 # 2. Shows a one-time explanation of SESSION-ONLY vs GLOBAL modes
-# 3. Does NOT auto-install anything - user must explicitly run /cca install
+# 3. Does NOT auto-install anything - user must explicitly run /cca-install
 #
 # Opt-out: export CLAUDE_CCA_AUTO=0
 
@@ -88,7 +88,7 @@ You have two options for how notifications work:
 │    • Adds one line to your .zshrc/.bashrc                       │
 └─────────────────────────────────────────────────────────────────┘
 
-To enable GLOBAL mode:    /cca install
+To enable GLOBAL mode:    /cca-install
 To suppress this message: export CLAUDE_CCA_AUTO=0
 
 EOF

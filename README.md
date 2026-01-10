@@ -64,7 +64,7 @@ When Claude Code needs your input—a question, approval, or notification—you 
 | **Multi-Channel** | Email, Telegram, or both simultaneously |
 | **Bidirectional** | Send notifications AND receive replies |
 | **Multi-Session** | Track multiple Claude Code sessions independently |
-| **Easy Toggle** | `/cca on`/`off` (per-session) or `/cca on all`/`off all` (global) |
+| **Easy Toggle** | `/cca on`/`off` (per-session) or `/cca on --all`/`off --all` (global) |
 | **Provider Flexible** | Any SMTP/IMAP email provider |
 | **85% Test Coverage** | Production-ready with comprehensive tests |
 
@@ -146,7 +146,7 @@ On first session, you'll see a one-time message explaining the two notification 
 **Session-Only (default):**
 - `/cca on` enables notifications for the current session only
 - `/cca off` disables only the current session (server keeps running for others)
-- Use `/cca on all` or `/cca off all` for global enable/disable
+- Use `/cca on --all` or `/cca off --all` for global enable/disable
 - Server can be shared across multiple sessions
 
 **Global:**
@@ -159,7 +159,7 @@ On first session, you'll see a one-time message explaining the two notification 
 
 To enable global mode:
 ```bash
-/cca install
+/cca-install
 ```
 
 ### 3. Configure Channels
@@ -309,9 +309,9 @@ TELEGRAM_CHAT_ID=123456789
 
 ## Commands
 
-### `/cca status`
+### `/cca`
 
-Show current server and channel status.
+Show current server and channel status, or toggle notifications.
 
 <details open>
 <summary><b>Example output</b></summary>
@@ -338,9 +338,9 @@ Show current server and channel status.
 
 ### `/cca on`
 
-Enable notifications for the **current session only**. Starts the server if not already running.
+Enable notifications for the **current session**. Starts the server if not already running.
 
-Use `/cca on all` to enable notifications **globally** (all sessions).
+Use `/cca on --all` to enable notifications for **all sessions**.
 
 <details>
 <summary><b>Example output</b></summary>
@@ -369,9 +369,9 @@ Notifications enabled for this session.
 
 ### `/cca off`
 
-Disable notifications for the **current session only**. The server keeps running for other sessions.
+Disable notifications for the **current session**. The server keeps running for other sessions.
 
-Use `/cca off all` to disable notifications **globally** and stop the server.
+Use `/cca off --all` to disable notifications for **all sessions** and stop the server.
 
 <details>
 <summary><b>Example output</b></summary>
@@ -382,7 +382,7 @@ Notifications disabled for this session. Server still running for other sessions
 
 ---
 
-### `/cca install`
+### `/cca-install`
 
 Install global notification support for all Claude sessions.
 
@@ -404,7 +404,7 @@ After installation, restart your shell. All future `claude` sessions will automa
 
 ---
 
-### `/cca uninstall`
+### `/cca-uninstall`
 
 Remove global installation and revert to session-only mode.
 
@@ -441,13 +441,13 @@ Check your inbox/Telegram for the test message.
 
 ---
 
-### `/statusline`
+### `/cca-statusline`
 
 Add or remove the CCA status indicator from your Claude Code statusline.
 
 ```
-/statusline on   # Add indicator to statusline
-/statusline off  # Remove indicator from statusline
+/cca-statusline add     # Add indicator to statusline
+/cca-statusline remove  # Remove indicator from statusline
 ```
 
 <details>
@@ -719,11 +719,12 @@ claude-code-anywhere/
 ├── .claude-plugin/
 │   └── plugin.json           # Plugin manifest (canonical location)
 ├── commands/
-│   ├── cca.md                # /cca command
-│   ├── cca-install.md        # /cca install command
-│   ├── cca-doctor.md         # /cca-doctor diagnostics
-│   ├── cca-test.md           # /cca-test command
-│   └── statusline.md         # /statusline command
+│   ├── cca.md                # /cca - toggle notifications
+│   ├── cca-install.md        # /cca-install - global mode setup
+│   ├── cca-uninstall.md      # /cca-uninstall - remove global mode
+│   ├── cca-statusline.md     # /cca-statusline - terminal indicator
+│   ├── cca-test.md           # /cca-test - send test notification
+│   └── cca-doctor.md         # /cca-doctor - diagnostics
 ├── hooks/
 │   ├── hooks.json            # Hook definitions
 │   └── check-install.sh      # SessionStart guidance hook
