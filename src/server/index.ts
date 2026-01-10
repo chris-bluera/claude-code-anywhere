@@ -230,7 +230,7 @@ export class BridgeServer {
       }
 
       // GET /api/response/:sessionId
-      const responseMatch = path.match(/^\/api\/response\/([a-f0-9]+)$/i);
+      const responseMatch = path.match(/^\/api\/response\/([a-f0-9-]+)$/i);
       if (responseMatch !== null && method === 'GET') {
         const sessionId = responseMatch[1];
         if (sessionId === undefined) {
@@ -241,7 +241,7 @@ export class BridgeServer {
       }
 
       // POST /api/session/:id/enable
-      const enableMatch = path.match(/^\/api\/session\/([a-f0-9]+)\/enable$/i);
+      const enableMatch = path.match(/^\/api\/session\/([a-f0-9-]+)\/enable$/i);
       if (enableMatch !== null && method === 'POST') {
         const sessionId = enableMatch[1];
         if (sessionId === undefined) {
@@ -252,7 +252,7 @@ export class BridgeServer {
       }
 
       // POST /api/session/:id/disable
-      const disableMatch = path.match(/^\/api\/session\/([a-f0-9]+)\/disable$/i);
+      const disableMatch = path.match(/^\/api\/session\/([a-f0-9-]+)\/disable$/i);
       if (disableMatch !== null && method === 'POST') {
         const sessionId = disableMatch[1];
         if (sessionId === undefined) {
@@ -263,7 +263,7 @@ export class BridgeServer {
       }
 
       // GET /api/session/:id/enabled
-      const enabledMatch = path.match(/^\/api\/session\/([a-f0-9]+)\/enabled$/i);
+      const enabledMatch = path.match(/^\/api\/session\/([a-f0-9-]+)\/enabled$/i);
       if (enabledMatch !== null && method === 'GET') {
         const sessionId = enabledMatch[1];
         if (sessionId === undefined) {
