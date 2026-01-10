@@ -70,11 +70,15 @@ curl -s -X POST "http://localhost:$PORT/api/session/$SESSION_ID/disable"
 ```
 
 ## Send Test Message
+
+**Important:** Use single quotes for `-d` to avoid bash interpreting `!` as history expansion.
+Break out of single quotes to interpolate `$SESSION_ID`: `'{"sessionId": "'"$SESSION_ID"'", ...}'`
+
 ```bash
 SESSION_ID=$(cat ~/.config/claude-code-anywhere/current-session-id)
 curl -s -X POST "http://localhost:$PORT/api/send" \
   -H 'Content-Type: application/json' \
-  -d '{"sessionId": "'"$SESSION_ID"'", "event": "Notification", "message": "Test message from Claude Code. Your notification setup is working!"}'
+  -d '{"sessionId": "'"$SESSION_ID"'", "event": "Notification", "message": "Test message from Claude Code."}'
 ```
 
 ## Logs
