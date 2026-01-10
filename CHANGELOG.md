@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.28](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.27...v0.6.28) (2026-01-10)
+
+
+### Bug Fixes
+
+* address code review issues (logger defaults, callback race, StateError context) ([c187c0a](https://github.com/blueraai/claude-code-anywhere/commit/c187c0a080e6069635b78f7778200c5b491384c1))
+
 ## [0.6.27](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.26...v0.6.27) (2026-01-10)
 
 ## [0.6.26](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.25...v0.6.26) (2026-01-10)
