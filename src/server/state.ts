@@ -4,6 +4,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { getStateFilePath, getStateDir } from '../shared/config.js';
+import { StateError } from '../shared/errors.js';
 import type { GlobalState, HookEvent } from '../shared/types.js';
 
 const DEFAULT_STATE: GlobalState = {
@@ -33,11 +34,11 @@ export function loadState(): GlobalState {
 
   // Check basic structure first for better error messages
   if (typeof parsed !== 'object' || parsed === null) {
-    throw new Error(`Invalid state file format at ${statePath}: expected object`);
+    throw new StateError('expected object', statePath);
   }
 
   if (!('hooks' in parsed) || typeof parsed.hooks !== 'object' || parsed.hooks === null) {
-    throw new Error(`Invalid state file format at ${statePath}: missing hooks object`);
+    throw new StateError('missing hooks object', statePath);
   }
 
   const missing = getMissingHooks(parsed.hooks);
@@ -46,14 +47,12 @@ export function loadState(): GlobalState {
     if (missing.length === 1 && missing[0] === 'ResponseSync') {
       Object.assign(parsed.hooks, { ResponseSync: DEFAULT_STATE.hooks.ResponseSync });
     } else {
-      throw new Error(
-        `Invalid state file format at ${statePath}: missing required hook fields: ${missing.join(', ')}`
-      );
+      throw new StateError(`missing required hook fields: ${missing.join(', ')}`, statePath);
     }
   }
 
   if (!isValidState(parsed)) {
-    throw new Error(`Invalid state file format at ${statePath}`);
+    throw new StateError('invalid format', statePath);
   }
 
   // Return validated state directly - no merging with defaults

@@ -6,7 +6,7 @@
  */
 import axios from 'axios';
 import { TELEGRAM_API_BASE_URL, TELEGRAM_POLL_INTERVAL_MS, TELEGRAM_POLL_TIMEOUT_SECONDS, } from '../shared/constants.js';
-import { TelegramConfigError } from '../shared/errors.js';
+import { TelegramConfigError, TelegramApiError, ValidationError } from '../shared/errors.js';
 import { createLogger } from '../shared/logger.js';
 const log = createLogger('telegram');
 /**
@@ -91,11 +91,11 @@ function parseCallbackData(data) {
     const actionStr = match?.[1];
     const sessionId = match?.[2];
     if (actionStr === undefined || sessionId === undefined) {
-        throw new Error(`Invalid callback data format: ${data}`);
+        throw new ValidationError(`Invalid callback data format: ${data}`, 'callbackData');
     }
     const actionLower = actionStr.toLowerCase();
     if (!isValidAction(actionLower)) {
-        throw new Error(`Invalid callback action: ${actionStr}`);
+        throw new ValidationError(`Invalid callback action: ${actionStr}`, 'callbackAction');
     }
     return { action: actionLower, sessionId };
 }
@@ -187,7 +187,7 @@ export class TelegramClient {
         try {
             const response = await this.client.get('/getMe');
             if (!response.data.ok) {
-                throw new Error(response.data.description ?? 'Unknown error from Telegram API');
+                throw new TelegramApiError(response.data.description ?? 'Unknown error from Telegram API');
             }
             log.info(`Initialized Telegram bot: @${response.data.result?.username ?? 'unknown'}`);
             this.lastError = null;
@@ -195,7 +195,7 @@ export class TelegramClient {
         catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
             this.lastError = message;
-            throw new Error(`Failed to initialize Telegram client: ${message}`);
+            throw new TelegramApiError(`Failed to initialize: ${message}`);
         }
     }
     /**
@@ -304,7 +304,7 @@ export class TelegramClient {
                 },
             });
             if (!response.data.ok || !response.data.result) {
-                throw new Error(response.data.description ?? 'Failed to get updates');
+                throw new TelegramApiError(response.data.description ?? 'Failed to get updates');
             }
             for (const update of response.data.result) {
                 this.lastUpdateId = update.update_id;
@@ -396,12 +396,12 @@ export class TelegramClient {
      */
     async handleCallbackQuery(callbackQuery) {
         if (this.client === null || this.messageCallback === null) {
-            throw new Error('Telegram client not initialized');
+            throw new TelegramApiError('Telegram client not initialized');
         }
         const { id, from, message, data } = callbackQuery;
         // Callback data is required
         if (data === undefined) {
-            throw new Error('Callback query missing data');
+            throw new ValidationError('Callback query missing data', 'callbackQuery.data');
         }
         // Only process from our configured chat
         if (message !== undefined && String(message.chat.id) !== this.config.chatId) {
@@ -463,13 +463,13 @@ export class TelegramClient {
      */
     async answerCallbackQuery(callbackQueryId) {
         if (this.client === null) {
-            throw new Error('Telegram client not initialized');
+            throw new TelegramApiError('Telegram client not initialized');
         }
         const response = await this.client.post('/answerCallbackQuery', {
             callback_query_id: callbackQueryId,
         });
         if (!response.data.ok) {
-            throw new Error(response.data.description ?? 'Failed to answer callback query');
+            throw new TelegramApiError(response.data.description ?? 'Failed to answer callback query');
         }
     }
     /**
@@ -477,7 +477,7 @@ export class TelegramClient {
      */
     async editMessageAfterResponse(chatId, messageId) {
         if (this.client === null) {
-            throw new Error('Telegram client not initialized');
+            throw new TelegramApiError('Telegram client not initialized');
         }
         const response = await this.client.post('/editMessageReplyMarkup', {
             chat_id: chatId,
@@ -485,7 +485,7 @@ export class TelegramClient {
             reply_markup: { inline_keyboard: [] },
         });
         if (!response.data.ok) {
-            throw new Error(response.data.description ?? 'Failed to edit message');
+            throw new TelegramApiError(response.data.description ?? 'Failed to edit message');
         }
         log.debug(`Removed inline keyboard from message ${String(messageId)}`);
     }

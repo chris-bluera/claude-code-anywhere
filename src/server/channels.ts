@@ -5,6 +5,7 @@
  * Aggregates responses from any channel.
  */
 
+import { ChannelError } from '../shared/errors.js';
 import { createLogger } from '../shared/logger.js';
 import type {
   Channel,
@@ -39,7 +40,7 @@ export class ChannelManager {
    */
   register(channel: Channel): void {
     if (this.channels.has(channel.name)) {
-      throw new Error(`Channel '${channel.name}' is already registered`);
+      throw new ChannelError('Channel already registered', channel.name);
     }
     this.channels.set(channel.name, channel);
     log.info(`Registered channel: ${channel.name}`);
@@ -75,7 +76,7 @@ export class ChannelManager {
     const enabledChannels = this.getEnabledChannels();
 
     if (enabledChannels.length === 0) {
-      throw new Error('No enabled channels to send to');
+      throw new ChannelError('No enabled channels to send to');
     }
 
     // Send to all channels in parallel

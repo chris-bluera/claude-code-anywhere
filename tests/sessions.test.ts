@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { sessionManager } from '../src/server/sessions.js';
+import { SessionError } from '../src/shared/errors.js';
 
 describe('SessionManager', () => {
   beforeEach(() => {
@@ -89,6 +90,7 @@ describe('SessionManager', () => {
   describe('disableSession', () => {
     it('throws when disabling non-existent session', () => {
       // CLAUDE.md: fail early and fast - throw on unexpected state
+      expect(() => sessionManager.disableSession('nonexistent')).toThrow(SessionError);
       expect(() => sessionManager.disableSession('nonexistent')).toThrow(
         'Session nonexistent does not exist'
       );
@@ -104,6 +106,9 @@ describe('SessionManager', () => {
   describe('storeResponse', () => {
     it('throws when storing response for non-existent session', () => {
       // CLAUDE.md: fail early and fast - throw on unexpected state
+      expect(() => sessionManager.storeResponse('nonexistent', 'response', '+1234567890')).toThrow(
+        SessionError
+      );
       expect(() => sessionManager.storeResponse('nonexistent', 'response', '+1234567890')).toThrow(
         'Session nonexistent does not exist'
       );
@@ -153,6 +158,9 @@ describe('SessionManager', () => {
 
   describe('storeMessageId', () => {
     it('throws when storing message ID for non-existent session', () => {
+      expect(() => sessionManager.storeMessageId('nonexistent', '<test@example.com>')).toThrow(
+        SessionError
+      );
       expect(() => sessionManager.storeMessageId('nonexistent', '<test@example.com>')).toThrow(
         'Session nonexistent does not exist'
       );

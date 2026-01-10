@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { StateError } from '../src/shared/errors.js';
 
 // Mock config to use temp directory
 const testDir = join(tmpdir(), 'claude-code-anywhere-test-' + Date.now());
@@ -42,12 +43,12 @@ describe('loadState', () => {
 
   it('throws when file has valid JSON but invalid schema', () => {
     writeFileSync(testStateFile, JSON.stringify({ foo: 'bar' }));
-    expect(() => loadState()).toThrow();
+    expect(() => loadState()).toThrow(StateError);
   });
 
   it('throws when file has wrong types', () => {
     writeFileSync(testStateFile, JSON.stringify({ enabled: 'yes', hooks: {} }));
-    expect(() => loadState()).toThrow();
+    expect(() => loadState()).toThrow(StateError);
   });
 
   it('throws when hooks are missing multiple required fields', () => {
@@ -59,6 +60,7 @@ describe('loadState', () => {
         hooks: { Notification: true }, // Missing Stop, PreToolUse, UserPromptSubmit, ResponseSync
       })
     );
+    expect(() => loadState()).toThrow(StateError);
     expect(() => loadState()).toThrow(/missing required hook/i);
   });
 
@@ -100,7 +102,7 @@ describe('loadState', () => {
         },
       })
     );
-    expect(() => loadState()).toThrow();
+    expect(() => loadState()).toThrow(StateError);
   });
 });
 

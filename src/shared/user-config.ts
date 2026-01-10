@@ -11,6 +11,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { getStateDir } from './config.js';
+import { ValidationError } from './errors.js';
 
 /**
  * User configuration structure
@@ -95,7 +96,10 @@ export function loadUserConfig(): UserConfig {
 
   // Basic validation - must be an object
   if (!isRecord(parsed)) {
-    throw new Error(`Invalid config file: expected object, got ${typeof parsed}`);
+    throw new ValidationError(
+      `Invalid config file: expected object, got ${typeof parsed}`,
+      'config'
+    );
   }
 
   const config: UserConfig = {};

@@ -7,6 +7,7 @@
  * 3. Hardcoded defaults (for operational params only)
  */
 import { DEFAULT_BRIDGE_PORT, DEFAULT_SMTP_HOST, DEFAULT_SMTP_PORT, DEFAULT_IMAP_HOST, DEFAULT_IMAP_PORT, DEFAULT_EMAIL_POLL_INTERVAL_MS, } from './constants.js';
+import { ConfigError } from './errors.js';
 import { loadUserConfig } from './user-config.js';
 /**
  * Validate email format
@@ -164,7 +165,7 @@ export function loadAppConfig() {
 export function getStateDir() {
     const home = process.env['HOME'] ?? process.env['USERPROFILE'];
     if (home === undefined) {
-        throw new Error('Cannot determine home directory: neither HOME nor USERPROFILE environment variable is set');
+        throw new ConfigError('Cannot determine home directory: neither HOME nor USERPROFILE environment variable is set', 'HOME');
     }
     return `${home}/.claude/claude-code-anywhere`;
 }

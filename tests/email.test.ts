@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { formatSubject, formatBody, EmailClient } from '../src/server/email.js';
+import { EmailApiError } from '../src/shared/errors.js';
 import type { EmailConfig } from '../src/shared/types.js';
 
 // Helper to access private methods for testing
@@ -527,9 +528,13 @@ describe('EmailClient - initialize error handling', () => {
 
     const client = new EmailClient(validConfig);
 
-    await expect(client.initialize()).rejects.toThrow(
-      'Failed to initialize email client: Invalid SMTP config'
-    );
+    try {
+      await client.initialize();
+      expect.fail('Expected initialize to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(EmailApiError);
+      expect((error as Error).message).toBe('Failed to initialize: Invalid SMTP config');
+    }
     expect(client.getStatus().error).toBe('Invalid SMTP config');
   });
 
@@ -542,9 +547,13 @@ describe('EmailClient - initialize error handling', () => {
 
     const client = new EmailClient(validConfig);
 
-    await expect(client.initialize()).rejects.toThrow(
-      'Failed to initialize email client: SMTP auth failed'
-    );
+    try {
+      await client.initialize();
+      expect.fail('Expected initialize to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(EmailApiError);
+      expect((error as Error).message).toBe('Failed to initialize: SMTP auth failed');
+    }
     expect(client.getStatus().error).toBe('SMTP auth failed');
   });
 });
@@ -565,9 +574,13 @@ describe('EmailClient - error handling with non-Error objects', () => {
 
     const client = new EmailClient(validConfig);
 
-    await expect(client.initialize()).rejects.toThrow(
-      'Failed to initialize email client: Unknown error'
-    );
+    try {
+      await client.initialize();
+      expect.fail('Expected initialize to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(EmailApiError);
+      expect((error as Error).message).toBe('Failed to initialize: Unknown error');
+    }
   });
 
   it('handles non-Error throws in sendEmail', async () => {

@@ -2,6 +2,7 @@
  * Session management for Claude Code instances
  */
 
+import { SessionError } from '../shared/errors.js';
 import type { Session, EmailResponse, HookEvent, ParsedSMS } from '../shared/types.js';
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
@@ -118,7 +119,7 @@ class SessionManager {
   disableSession(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      throw new Error(`Session ${sessionId} does not exist`);
+      throw new SessionError(sessionId);
     }
     session.enabled = false;
     session.lastActivity = Date.now();
@@ -131,7 +132,7 @@ class SessionManager {
   isSessionEnabled(sessionId: string): boolean {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      throw new Error(`Session ${sessionId} does not exist`);
+      throw new SessionError(sessionId);
     }
     return session.enabled;
   }
@@ -143,7 +144,7 @@ class SessionManager {
   storeResponse(sessionId: string, response: string, from: string): void {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      throw new Error(`Session ${sessionId} does not exist`);
+      throw new SessionError(sessionId);
     }
 
     this.pendingResponses.set(sessionId, {
@@ -187,7 +188,7 @@ class SessionManager {
   storeMessageId(sessionId: string, messageId: string): void {
     const session = this.sessions.get(sessionId);
     if (session === undefined) {
-      throw new Error(`Session ${sessionId} does not exist`);
+      throw new SessionError(sessionId);
     }
     session.pendingMessageId = messageId;
     session.lastActivity = Date.now();

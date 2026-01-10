@@ -15,6 +15,7 @@ import {
   DEFAULT_IMAP_PORT,
   DEFAULT_EMAIL_POLL_INTERVAL_MS,
 } from './constants.js';
+import { ConfigError } from './errors.js';
 import { loadUserConfig } from './user-config.js';
 import type { AppConfig, EmailConfig, TelegramConfig, Result } from './types.js';
 
@@ -213,8 +214,9 @@ export function loadAppConfig(): Result<AppConfig, string> {
 export function getStateDir(): string {
   const home = process.env['HOME'] ?? process.env['USERPROFILE'];
   if (home === undefined) {
-    throw new Error(
-      'Cannot determine home directory: neither HOME nor USERPROFILE environment variable is set'
+    throw new ConfigError(
+      'Cannot determine home directory: neither HOME nor USERPROFILE environment variable is set',
+      'HOME'
     );
   }
   return `${home}/.claude/claude-code-anywhere`;

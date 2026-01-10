@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChannelManager } from '../src/server/channels.js';
+import { ChannelError } from '../src/shared/errors.js';
 import type {
   Channel,
   ChannelNotification,
@@ -54,7 +55,8 @@ describe('ChannelManager', () => {
       const channel2 = createMockChannel('test');
 
       manager.register(channel1);
-      expect(() => manager.register(channel2)).toThrow("Channel 'test' is already registered");
+      expect(() => manager.register(channel2)).toThrow(ChannelError);
+      expect(() => manager.register(channel2)).toThrow('Channel already registered');
     });
 
     it('registers multiple channels', () => {

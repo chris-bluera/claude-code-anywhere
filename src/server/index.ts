@@ -30,6 +30,7 @@ import {
 import { sessionManager } from './sessions.js';
 import { TelegramClient } from './telegram.js';
 import { loadEmailConfig, loadTelegramConfig } from '../shared/config.js';
+import { ConfigError, ServerError } from '../shared/errors.js';
 import { createLogger } from '../shared/logger.js';
 import type { ChannelResponse } from '../shared/channel.js';
 import type { IncomingMessage, ServerResponse, Server } from 'http';
@@ -70,7 +71,7 @@ export class BridgeServer {
     // Load Email config (required)
     const emailConfigResult = loadEmailConfig();
     if (!emailConfigResult.success) {
-      throw new Error(emailConfigResult.error);
+      throw new ConfigError(emailConfigResult.error, 'email');
     }
 
     this.emailClient = new EmailClient(emailConfigResult.data);
@@ -207,7 +208,7 @@ export class BridgeServer {
    */
   private getContext(): RouteContext {
     if (this.channelManager === null) {
-      throw new Error('Server not started');
+      throw new ServerError('Server not started');
     }
     return {
       channelManager: this.channelManager,
@@ -254,7 +255,7 @@ export class BridgeServer {
       if (responseMatch !== null && method === 'GET') {
         const sessionId = responseMatch[1];
         if (sessionId === undefined) {
-          throw new Error('Unexpected: sessionId undefined after regex match');
+          throw new ServerError('Unexpected: sessionId undefined after regex match');
         }
         handleGetResponse(req, res, sessionId);
         return;
@@ -265,7 +266,7 @@ export class BridgeServer {
       if (enableMatch !== null && method === 'POST') {
         const sessionId = enableMatch[1];
         if (sessionId === undefined) {
-          throw new Error('Unexpected: sessionId undefined after regex match');
+          throw new ServerError('Unexpected: sessionId undefined after regex match');
         }
         handleEnableSession(req, res, sessionId);
         return;
@@ -276,7 +277,7 @@ export class BridgeServer {
       if (disableMatch !== null && method === 'POST') {
         const sessionId = disableMatch[1];
         if (sessionId === undefined) {
-          throw new Error('Unexpected: sessionId undefined after regex match');
+          throw new ServerError('Unexpected: sessionId undefined after regex match');
         }
         handleDisableSession(req, res, sessionId);
         return;

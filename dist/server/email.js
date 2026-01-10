@@ -8,7 +8,7 @@ import { ImapFlow } from 'imapflow';
 import nodemailer from 'nodemailer';
 import { sessionManager } from './sessions.js';
 import { MAX_EMAIL_BODY_LENGTH } from '../shared/constants.js';
-import { EmailConfigError, MissingConfigError } from '../shared/errors.js';
+import { EmailConfigError, MissingConfigError, EmailApiError } from '../shared/errors.js';
 import { createLogger } from '../shared/logger.js';
 const log = createLogger('email');
 /**
@@ -138,7 +138,7 @@ export class EmailClient {
         catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
             this.lastError = message;
-            throw new Error(`Failed to initialize email client: ${message}`);
+            throw new EmailApiError(`Failed to initialize: ${message}`);
         }
     }
     /**

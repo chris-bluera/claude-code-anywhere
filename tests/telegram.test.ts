@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
 import { TelegramClient, getEventEmoji, getEventHeader } from '../src/server/telegram.js';
+import { TelegramConfigError, TelegramApiError } from '../src/shared/errors.js';
 import type { TelegramConfig } from '../src/shared/types.js';
 
 // Mock axios
@@ -39,11 +40,13 @@ describe('TelegramClient', () => {
   describe('validateConfig', () => {
     it('throws when botToken is missing', () => {
       const client = new TelegramClient({ botToken: '', chatId: '123' });
+      expect(() => client.validateConfig()).toThrow(TelegramConfigError);
       expect(() => client.validateConfig()).toThrow('config.json');
     });
 
     it('throws when chatId is missing', () => {
       const client = new TelegramClient({ botToken: 'token', chatId: '' });
+      expect(() => client.validateConfig()).toThrow(TelegramConfigError);
       expect(() => client.validateConfig()).toThrow('config.json');
     });
 
@@ -85,6 +88,7 @@ describe('TelegramClient', () => {
       });
 
       const client = new TelegramClient(validConfig);
+      await expect(client.initialize()).rejects.toThrow(TelegramApiError);
       await expect(client.initialize()).rejects.toThrow('Invalid token');
     });
 
@@ -92,6 +96,7 @@ describe('TelegramClient', () => {
       mockAxiosInstance.get.mockRejectedValue(new Error('Network error'));
 
       const client = new TelegramClient(validConfig);
+      await expect(client.initialize()).rejects.toThrow(TelegramApiError);
       await expect(client.initialize()).rejects.toThrow('Network error');
     });
   });

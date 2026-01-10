@@ -3,6 +3,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { getStateFilePath, getStateDir } from '../shared/config.js';
+import { StateError } from '../shared/errors.js';
 const DEFAULT_STATE = {
     enabled: true,
     hooks: {
@@ -26,10 +27,10 @@ export function loadState() {
     const parsed = JSON.parse(content);
     // Check basic structure first for better error messages
     if (typeof parsed !== 'object' || parsed === null) {
-        throw new Error(`Invalid state file format at ${statePath}: expected object`);
+        throw new StateError('expected object', statePath);
     }
     if (!('hooks' in parsed) || typeof parsed.hooks !== 'object' || parsed.hooks === null) {
-        throw new Error(`Invalid state file format at ${statePath}: missing hooks object`);
+        throw new StateError('missing hooks object', statePath);
     }
     const missing = getMissingHooks(parsed.hooks);
     if (missing.length > 0) {
@@ -38,11 +39,11 @@ export function loadState() {
             Object.assign(parsed.hooks, { ResponseSync: DEFAULT_STATE.hooks.ResponseSync });
         }
         else {
-            throw new Error(`Invalid state file format at ${statePath}: missing required hook fields: ${missing.join(', ')}`);
+            throw new StateError(`missing required hook fields: ${missing.join(', ')}`, statePath);
         }
     }
     if (!isValidState(parsed)) {
-        throw new Error(`Invalid state file format at ${statePath}`);
+        throw new StateError('invalid format', statePath);
     }
     // Return validated state directly - no merging with defaults
     return {

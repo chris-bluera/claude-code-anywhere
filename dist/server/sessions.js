@@ -1,6 +1,7 @@
 /**
  * Session management for Claude Code instances
  */
+import { SessionError } from '../shared/errors.js';
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 /**
  * In-memory session store
@@ -98,7 +99,7 @@ class SessionManager {
     disableSession(sessionId) {
         const session = this.sessions.get(sessionId);
         if (session === undefined) {
-            throw new Error(`Session ${sessionId} does not exist`);
+            throw new SessionError(sessionId);
         }
         session.enabled = false;
         session.lastActivity = Date.now();
@@ -110,7 +111,7 @@ class SessionManager {
     isSessionEnabled(sessionId) {
         const session = this.sessions.get(sessionId);
         if (session === undefined) {
-            throw new Error(`Session ${sessionId} does not exist`);
+            throw new SessionError(sessionId);
         }
         return session.enabled;
     }
@@ -121,7 +122,7 @@ class SessionManager {
     storeResponse(sessionId, response, from) {
         const session = this.sessions.get(sessionId);
         if (session === undefined) {
-            throw new Error(`Session ${sessionId} does not exist`);
+            throw new SessionError(sessionId);
         }
         this.pendingResponses.set(sessionId, {
             sessionId,
@@ -158,7 +159,7 @@ class SessionManager {
     storeMessageId(sessionId, messageId) {
         const session = this.sessions.get(sessionId);
         if (session === undefined) {
-            throw new Error(`Session ${sessionId} does not exist`);
+            throw new SessionError(sessionId);
         }
         session.pendingMessageId = messageId;
         session.lastActivity = Date.now();

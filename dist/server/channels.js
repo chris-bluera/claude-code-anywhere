@@ -4,6 +4,7 @@
  * Sends notifications to all enabled channels in parallel.
  * Aggregates responses from any channel.
  */
+import { ChannelError } from '../shared/errors.js';
 import { createLogger } from '../shared/logger.js';
 const log = createLogger('channels');
 /**
@@ -16,7 +17,7 @@ export class ChannelManager {
      */
     register(channel) {
         if (this.channels.has(channel.name)) {
-            throw new Error(`Channel '${channel.name}' is already registered`);
+            throw new ChannelError('Channel already registered', channel.name);
         }
         this.channels.set(channel.name, channel);
         log.info(`Registered channel: ${channel.name}`);
@@ -47,7 +48,7 @@ export class ChannelManager {
         let failureCount = 0;
         const enabledChannels = this.getEnabledChannels();
         if (enabledChannels.length === 0) {
-            throw new Error('No enabled channels to send to');
+            throw new ChannelError('No enabled channels to send to');
         }
         // Send to all channels in parallel
         const sendPromises = enabledChannels.map(async (channel) => {

@@ -10,6 +10,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { getStateDir } from './config.js';
+import { ValidationError } from './errors.js';
 /**
  * Get the path to the user config file
  */
@@ -67,7 +68,7 @@ export function loadUserConfig() {
     const parsed = JSON.parse(content);
     // Basic validation - must be an object
     if (!isRecord(parsed)) {
-        throw new Error(`Invalid config file: expected object, got ${typeof parsed}`);
+        throw new ValidationError(`Invalid config file: expected object, got ${typeof parsed}`, 'config');
     }
     const config = {};
     const telegram = extractTelegramConfig(parsed);
