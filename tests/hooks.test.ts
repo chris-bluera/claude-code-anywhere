@@ -3,6 +3,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'http';
 
 describe('SessionStart hook (check-install.sh)', () => {
   const hookScript = join(process.cwd(), 'hooks', 'check-install.sh');
@@ -122,6 +123,108 @@ describe('SessionStart hook (check-install.sh)', () => {
 
       // Cleanup
       rmSync(xdgConfigHome, { recursive: true });
+    });
+  });
+
+  describe('session auto-registration with server', () => {
+    let server: Server;
+    let serverPort: number;
+    let registeredSessionId: string | null = null;
+    let tempPluginRoot: string;
+
+    beforeEach(async () => {
+      registeredSessionId = null;
+      tempPluginRoot = join(tmpdir(), 'cca-plugin-' + Date.now());
+      mkdirSync(tempPluginRoot, { recursive: true });
+
+      // Create a mock server that records session enable requests
+      server = createServer((req: IncomingMessage, res: ServerResponse) => {
+        const match = req.url?.match(/\/api\/session\/([^/]+)\/enable/);
+        if (req.method === 'POST' && match) {
+          registeredSessionId = match[1];
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } else {
+          res.writeHead(404);
+          res.end();
+        }
+      });
+
+      await new Promise<void>((resolve) => {
+        server.listen(0, () => {
+          const addr = server.address();
+          serverPort = typeof addr === 'object' && addr ? addr.port : 0;
+          // Write port file so hook can find it
+          writeFileSync(join(tempPluginRoot, 'port'), String(serverPort));
+          resolve();
+        });
+      });
+    });
+
+    afterEach(() => {
+      server.close();
+      if (existsSync(tempPluginRoot)) {
+        rmSync(tempPluginRoot, { recursive: true });
+      }
+    });
+
+    it('auto-registers session with server when server is running', async () => {
+      const testSessionId = 'auto-reg-test-' + Date.now();
+      const xdgConfigHome = join(tmpdir(), 'cca-test-autoreg-' + Date.now());
+      const hookInput = JSON.stringify({ session_id: testSessionId, cwd: '/tmp' });
+
+      // Run hook with CLAUDE_PLUGIN_ROOT pointing to our temp dir with port file
+      execSync(`echo '${hookInput}' | bash ${hookScript}`, {
+        env: {
+          ...process.env,
+          XDG_CONFIG_HOME: xdgConfigHome,
+          HOME: tmpdir(),
+          CLAUDE_PLUGIN_ROOT: tempPluginRoot,
+        },
+        stdio: 'pipe',
+      });
+
+      // Give the curl a moment to complete (it runs synchronously with --max-time 1)
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify the session was registered
+      expect(registeredSessionId).toBe(testSessionId);
+
+      // Cleanup
+      if (existsSync(xdgConfigHome)) {
+        rmSync(xdgConfigHome, { recursive: true });
+      }
+    });
+
+    it('does not fail when server is not reachable', () => {
+      // Stop server first
+      server.close();
+
+      const testSessionId = 'no-server-test-' + Date.now();
+      const xdgConfigHome = join(tmpdir(), 'cca-test-noserver-' + Date.now());
+      const hookInput = JSON.stringify({ session_id: testSessionId, cwd: '/tmp' });
+
+      // This should not throw - hook should handle unreachable server gracefully
+      expect(() => {
+        execSync(`echo '${hookInput}' | bash ${hookScript}`, {
+          env: {
+            ...process.env,
+            XDG_CONFIG_HOME: xdgConfigHome,
+            HOME: tmpdir(),
+            CLAUDE_PLUGIN_ROOT: tempPluginRoot,
+          },
+          stdio: 'pipe',
+        });
+      }).not.toThrow();
+
+      // Session file should still be created
+      const sessionFile = join(xdgConfigHome, 'claude-code-anywhere', 'current-session-id');
+      expect(existsSync(sessionFile)).toBe(true);
+
+      // Cleanup
+      if (existsSync(xdgConfigHome)) {
+        rmSync(xdgConfigHome, { recursive: true });
+      }
     });
   });
 });

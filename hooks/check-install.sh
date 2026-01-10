@@ -40,9 +40,10 @@ if [ -n "$SESSION_ID" ]; then
   if [ -n "$PORT_FILE" ] && [ -f "$PORT_FILE" ]; then
     PORT=$(cat "$PORT_FILE" 2>/dev/null || true)
     if [ -n "$PORT" ]; then
-      # Silent background registration - enables session for notifications
+      # Synchronous registration with short timeout - enables session for notifications
+      # Using synchronous curl (no &) to ensure registration completes before hook exits
       curl -s -X POST "http://localhost:${PORT}/api/session/${SESSION_ID}/enable" \
-        --max-time 1 >/dev/null 2>&1 &
+        --max-time 1 >/dev/null 2>&1 || true
     fi
   fi
 fi
