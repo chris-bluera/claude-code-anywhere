@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.17](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.16...v0.6.17) (2026-01-10)
+
+
+### Bug Fixes
+
+* **hooks:** use canonical port path for cross-context compatibility ([d22117a](https://github.com/blueraai/claude-code-anywhere/commit/d22117ac610b81167d48f04061f8b95dada1b01b))
+
 ## [0.6.16](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.15...v0.6.16) (2026-01-10)
 
 
