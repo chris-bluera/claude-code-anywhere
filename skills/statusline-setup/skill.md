@@ -15,15 +15,15 @@ Intelligently inject, update, or remove the notification status indicator in the
 
 ## Code Block to Inject
 
-Current version: **v3**
+Current version: **v4**
 
-This exact block must be inserted:
+This exact block must be inserted. Note: Uses `$input` variable which must contain the JSON from stdin.
 
 ```bash
-# --- claude-code-anywhere status --- v3
+# --- claude-code-anywhere status --- v4
 CCA_STATUS=""
 _CCA_PORT=$(cat ~/.config/claude-code-anywhere/port 2>/dev/null)
-_SESSION_ID=$(cat ~/.config/claude-code-anywhere/current-session-id 2>/dev/null)
+_SESSION_ID=$(echo "$input" | jq -r '.session_id // empty' 2>/dev/null)
 if [ -n "$_CCA_PORT" ] && [ -n "$_SESSION_ID" ]; then
     _ACTIVE=$(curl -s --max-time 0.3 "http://localhost:$_CCA_PORT/api/active?sessionId=$_SESSION_ID" 2>/dev/null | grep -o '"active":true')
     if [ -n "$_ACTIVE" ]; then
@@ -47,12 +47,13 @@ These markers enable clean identification, update, and removal.
 ## Version Detection
 
 The start marker may include a version suffix:
-- `# --- claude-code-anywhere status --- v3` (current version - uses canonical config path)
+- `# --- claude-code-anywhere status --- v4` (current version - uses session_id from JSON input)
+- `# --- claude-code-anywhere status --- v3` (old version - reads session ID from shared file)
 - `# --- claude-code-anywhere status --- v2` (old version - wrong port path)
 - `# --- claude-code-anywhere status --- v1` (old version - invisible gray on dark terminals)
 - `# --- claude-code-anywhere status ---` (old version, no suffix)
 
-When updating, ALWAYS use the versioned marker (`v3`).
+When updating, ALWAYS use the versioned marker (`v4`).
 
 ## Idempotent Update Strategy
 

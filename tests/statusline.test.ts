@@ -154,4 +154,58 @@ describe('statusline detection', () => {
       expect(count).toBe(1);
     });
   });
+
+  describe('v4 session ID isolation (regression tests)', () => {
+    it('v4 block extracts session_id from JSON input, not from shared file', () => {
+      const content = loadFixture('installed-current.sh');
+      const block = extractBlock(content);
+
+      // v4 MUST use $input | jq to get session_id (per-session isolation)
+      expect(block).toContain('echo "$input" | jq -r \'.session_id');
+
+      // v4 MUST NOT read from a shared file (breaks session isolation)
+      expect(block).not.toContain('current-session-id');
+      expect(block).not.toContain('cat ~/.config/claude-code-anywhere/current-session');
+    });
+
+    it('partial-block fixture uses v4 session ID extraction', () => {
+      const content = loadFixture('partial-block.sh');
+      const block = extractBlock(content);
+
+      expect(block).toContain('echo "$input" | jq -r \'.session_id');
+      expect(block).not.toContain('current-session-id');
+    });
+
+    it('duplicate-outputs fixture uses v4 session ID extraction', () => {
+      const content = loadFixture('duplicate-outputs.sh');
+      const block = extractBlock(content);
+
+      expect(block).toContain('echo "$input" | jq -r \'.session_id');
+      expect(block).not.toContain('current-session-id');
+    });
+
+    it('CURRENT_VERSION is v4 for session ID isolation', () => {
+      // This ensures the version constant is correctly set
+      // If someone downgrades the version, this test fails
+      expect(CURRENT_VERSION).toBe('v4');
+    });
+
+    it('v4 block does NOT use shared session ID file', () => {
+      // Regression test: v3 used a shared file which caused all sessions
+      // to show the same status when any one session was enabled/disabled
+      const content = loadFixture('installed-current.sh');
+      const block = extractBlock(content);
+
+      // These patterns would break session isolation
+      const brokenPatterns = [
+        'current-session-id',
+        '~/.claude-code-anywhere/session',
+        '/.config/claude-code-anywhere/session',
+      ];
+
+      for (const pattern of brokenPatterns) {
+        expect(block).not.toContain(pattern);
+      }
+    });
+  });
 });

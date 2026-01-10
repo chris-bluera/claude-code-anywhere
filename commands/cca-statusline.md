@@ -40,13 +40,13 @@ See @skills/statusline-setup/skill.md for implementation details.
 4. Check for markers:
    - START: `# --- claude-code-anywhere status ---`
    - END: `# --- end cca status ---`
-5. Check for version marker (e.g., `--- v1`)
+5. Check for version marker (e.g., `--- v4`)
 
 **CASE A: No markers found**
 - Inject the code block from skill.md
 - Append `$CCA_STATUS` to all output lines (printf/echo)
 
-**CASE B: Both markers found with current version (v1)**
+**CASE B: Both markers found with current version (v4)**
 - Check if `$CCA_STATUS` is in output lines
 - If missing: append to output lines
 - If present (exactly once): report "already up to date"
