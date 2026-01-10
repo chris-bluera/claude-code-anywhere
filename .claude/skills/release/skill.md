@@ -10,19 +10,24 @@ version: 1.0.0
 
 | Script | What it does |
 |--------|--------------|
-| `bun run release:patch` | Bump 0.0.x, commit, tag, push |
-| `bun run release:minor` | Bump 0.x.0, commit, tag, push |
-| `bun run release:major` | Bump x.0.0, commit, tag, push |
+| `bun run release` | **Auto-detect** bump from commits, commit, tag, push |
+| `bun run release:patch` | Force patch (0.0.x) |
+| `bun run release:minor` | Force minor (0.x.0) |
+| `bun run release:major` | Force major (x.0.0) |
 
-These use `commit-and-tag-version` under the hood.
+## Auto-Detection Rules
 
-## When to Use Each
+When using `bun run release` (recommended), the version bump is determined by commit messages since the last tag:
 
-| Change Type | Version |
-|-------------|---------|
-| Bug fixes, docs, minor tweaks | `patch` |
-| New features, non-breaking | `minor` |
-| Breaking changes, renames | `major` |
+| Commit Type | Version Bump |
+|-------------|--------------|
+| `fix(scope): ...` | patch |
+| `feat(scope): ...` | minor |
+| `feat!: ...` or `BREAKING CHANGE:` in body | major |
+
+Other types (`docs:`, `chore:`, `refactor:`, `test:`, `style:`, `ci:`, `build:`, `perf:`) trigger a patch bump if present alongside fix/feat commits.
+
+Use explicit scripts (`release:patch`, `release:minor`, `release:major`) only when you need to override auto-detection.
 
 ## GitHub Actions Flow
 
@@ -46,7 +51,8 @@ gh release view                    # View latest release
 
 | Issue | Solution |
 |-------|----------|
-| CI failed | Fix issue, `bun run release:patch` again |
+| CI failed | Fix issue, `bun run release` again |
 | Tag exists | Delete tag: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z` |
 | Workflow stuck | `gh run cancel <id>` then re-push |
 | Re-run workflow | `gh run rerun <run-id>` |
+| Wrong version detected | Use explicit `bun run release:patch/minor/major` |

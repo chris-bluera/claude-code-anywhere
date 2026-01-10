@@ -707,9 +707,10 @@ bun run build
 | `bun run version:patch` | Bump patch version (0.0.x) | Bug fixes |
 | `bun run version:minor` | Bump minor version (0.x.0) | New features |
 | `bun run version:major` | Bump major version (x.0.0) | Breaking changes |
-| `bun run release:patch` | Version bump + tag + push | Release bug fixes |
-| `bun run release:minor` | Version bump + tag + push | Release new features |
-| `bun run release:major` | Version bump + tag + push | Release breaking changes |
+| `bun run release` | Auto-detect version + tag + push | Release (recommended) |
+| `bun run release:patch` | Force patch + tag + push | Override: bug fixes |
+| `bun run release:minor` | Force minor + tag + push | Override: new features |
+| `bun run release:major` | Force major + tag + push | Override: breaking changes |
 
 ### Project Structure
 
@@ -792,11 +793,16 @@ cd "$PLUGIN_ROOT" && bun run server
 ### Releasing
 
 ```bash
-# One command does everything: bump, commit, tag, push
-bun run release:patch   # Bug fixes (0.0.x)
-bun run release:minor   # New features (0.x.0)
-bun run release:major   # Breaking changes (x.0.0)
+# Auto-detect version from conventional commits (recommended)
+bun run release
+
+# Or force a specific version bump
+bun run release:patch   # Force 0.0.x
+bun run release:minor   # Force 0.x.0
+bun run release:major   # Force x.0.0
 ```
+
+Auto-detection uses conventional commits: `fix:` → patch, `feat:` → minor, `feat!:`/`BREAKING CHANGE:` → major.
 
 **What happens automatically:**
 1. Version bumped in package.json, plugin.json

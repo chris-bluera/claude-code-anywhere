@@ -9,10 +9,13 @@ Cut a release and monitor CI/CD. See @.claude/skills/release/skill.md for workfl
 ## Quick Release
 
 ```bash
-bun run release:$1   # patch | minor | major
+bun run release          # Auto-detect from commits (recommended)
+bun run release:patch    # Force patch
+bun run release:minor    # Force minor
+bun run release:major    # Force major
 ```
 
-This bumps version, commits, tags, and pushes in one command.
+Auto-detection uses conventional commits: `fix:` → patch, `feat:` → minor, `feat!:`/`BREAKING CHANGE:` → major.
 
 ## Monitor
 
