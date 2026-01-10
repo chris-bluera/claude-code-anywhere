@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.7](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.6...v0.6.7) (2026-01-10)
+
+
+### Bug Fixes
+
+* **routing:** support UUID session IDs with dashes in URL patterns ([e92c1c8](https://github.com/blueraai/claude-code-anywhere/commit/e92c1c8e9531068fcf573dd525e3766d27fbff1a))
+
 ## [0.6.6](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.5...v0.6.6) (2026-01-10)
 
 
