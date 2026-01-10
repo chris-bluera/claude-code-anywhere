@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.14](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.13...v0.6.14) (2026-01-10)
+
+
+### Features
+
+* **release:** add skill bypass and pre-flight checks ([e3acf92](https://github.com/blueraai/claude-code-anywhere/commit/e3acf92094b1070de56b0427a650f17fa31991b1))
+
 ## [0.6.13](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.12...v0.6.13) (2026-01-10)
 
 
