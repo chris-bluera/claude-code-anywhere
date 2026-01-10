@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.8](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.7...v0.6.8) (2026-01-10)
+
+
+### Bug Fixes
+
+* **routes:** remove hasSession check from enable endpoint ([a2db1dd](https://github.com/blueraai/claude-code-anywhere/commit/a2db1ddad24260ca8940589d8130141decbff71c))
+
 ## [0.6.7](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.6...v0.6.7) (2026-01-10)
 
 
