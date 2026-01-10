@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.16](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.15...v0.6.16) (2026-01-10)
+
+
+### Bug Fixes
+
+* **statusline:** use session_id from JSON input for per-session isolation (v4) ([e172536](https://github.com/blueraai/claude-code-anywhere/commit/e172536850e0c446f16db3c0ad1e6ad9a18b30a4))
+* **statusline:** write port to canonical config path for statusline v3 ([bf955a7](https://github.com/blueraai/claude-code-anywhere/commit/bf955a77a2b92dc7a00f8228741389335e532265))
+
 ## [0.6.15](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.14...v0.6.15) (2026-01-10)
 
 
