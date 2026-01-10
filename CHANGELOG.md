@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.19](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.18...v0.6.19) (2026-01-10)
+
+
+### Bug Fixes
+
+* **hooks:** discard stale responses in PreToolUse approval polling ([749d9a6](https://github.com/blueraai/claude-code-anywhere/commit/749d9a649f6f3507375f93a96aac0b96364d3058))
+
 ## [0.6.18](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.17...v0.6.18) (2026-01-10)
 
 
