@@ -14,11 +14,10 @@ import {
   unlinkSync,
   readdirSync,
 } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
+import { getLogsDir } from './config.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOGS_DIR = join(__dirname, '../../logs');
+const LOGS_DIR = getLogsDir();
 
 /**
  * Get required env var or throw

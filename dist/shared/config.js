@@ -162,4 +162,10 @@ export function getStateDir() {
 export function getStateFilePath() {
     return `${getStateDir()}/state.json`;
 }
+/**
+ * Get the logs directory path (canonical location)
+ */
+export function getLogsDir() {
+    return `${getStateDir()}/logs`;
+}
 //# sourceMappingURL=config.js.map

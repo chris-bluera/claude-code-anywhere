@@ -5,10 +5,9 @@
  * Implements size-based rotation (default 10MB, keeps 5 rotated files)
  */
 import { appendFileSync, mkdirSync, existsSync, statSync, renameSync, unlinkSync, readdirSync, } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOGS_DIR = join(__dirname, '../../logs');
+import { join } from 'path';
+import { getLogsDir } from './config.js';
+const LOGS_DIR = getLogsDir();
 /**
  * Get required env var or throw
  */

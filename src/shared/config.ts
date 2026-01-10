@@ -207,3 +207,10 @@ export function getStateDir(): string {
 export function getStateFilePath(): string {
   return `${getStateDir()}/state.json`;
 }
+
+/**
+ * Get the logs directory path (canonical location)
+ */
+export function getLogsDir(): string {
+  return `${getStateDir()}/logs`;
+}

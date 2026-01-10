@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   getStateDir,
   getStateFilePath,
+  getLogsDir,
   loadAppConfig,
   loadEmailConfig,
 } from '../src/shared/config.js';
@@ -309,6 +310,28 @@ describe('config', () => {
       process.env['HOME'] = '/Users/test';
 
       expect(getStateFilePath()).toBe('/Users/test/.claude/claude-code-anywhere/state.json');
+    });
+  });
+
+  describe('getLogsDir', () => {
+    let originalHome: string | undefined;
+
+    beforeEach(() => {
+      originalHome = process.env['HOME'];
+    });
+
+    afterEach(() => {
+      if (originalHome !== undefined) {
+        process.env['HOME'] = originalHome;
+      } else {
+        delete process.env['HOME'];
+      }
+    });
+
+    it('returns logs path under state directory', () => {
+      process.env['HOME'] = '/Users/test';
+
+      expect(getLogsDir()).toBe('/Users/test/.claude/claude-code-anywhere/logs');
     });
   });
 });

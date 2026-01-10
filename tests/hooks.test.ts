@@ -421,3 +421,20 @@ describe('hook scripts use canonical port path (regression tests)', () => {
     expect(content).not.toContain('${PLUGIN_ROOT}/port');
   });
 });
+
+describe('logger uses canonical path (regression test)', () => {
+  // Logger should use getLogsDir() from config.ts to write to canonical location
+  // NOT relative path like __dirname which changes based on where server runs from
+
+  it('logger.ts imports getLogsDir from config', () => {
+    const content = readFileSync(join(process.cwd(), 'src/shared/logger.ts'), 'utf-8');
+    expect(content).toContain('import { getLogsDir }');
+  });
+
+  it('logger.ts does not use __dirname for LOGS_DIR', () => {
+    const content = readFileSync(join(process.cwd(), 'src/shared/logger.ts'), 'utf-8');
+    // Should not have __dirname used for LOGS_DIR
+    expect(content).not.toMatch(/LOGS_DIR.*__dirname/);
+    expect(content).not.toMatch(/__dirname.*LOGS_DIR/);
+  });
+});

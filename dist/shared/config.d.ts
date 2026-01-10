@@ -24,4 +24,8 @@ export declare function getStateDir(): string;
  * Get the state file path
  */
 export declare function getStateFilePath(): string;
+/**
+ * Get the logs directory path (canonical location)
+ */
+export declare function getLogsDir(): string;
 //# sourceMappingURL=config.d.ts.map
