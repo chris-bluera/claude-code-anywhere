@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.21](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.20...v0.6.21) (2026-01-10)
+
+
+### Features
+
+* **hooks:** auto-restart server on version mismatch after plugin update ([7d4b8ee](https://github.com/blueraai/claude-code-anywhere/commit/7d4b8ee9c7d9434d9c62e0167c7fa7a278897ab4))
+
 ## [0.6.20](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.19...v0.6.20) (2026-01-10)
 
 
