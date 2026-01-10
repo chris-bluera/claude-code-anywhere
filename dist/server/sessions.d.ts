@@ -39,7 +39,7 @@ declare class SessionManager {
     getSessionCount(): number;
     /**
      * Enable notifications for a session
-     * @throws Error if session does not exist
+     * Auto-creates the session if it doesn't exist
      */
     enableSession(sessionId: string): void;
     /**

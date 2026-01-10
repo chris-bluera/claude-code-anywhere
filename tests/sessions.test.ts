@@ -24,11 +24,23 @@ describe('SessionManager', () => {
   });
 
   describe('enableSession', () => {
-    it('throws when enabling non-existent session', () => {
-      // CLAUDE.md: fail early and fast - throw on unexpected state
-      expect(() => sessionManager.enableSession('nonexistent')).toThrow(
-        'Session nonexistent does not exist'
-      );
+    it('auto-creates session when enabling non-existent session', () => {
+      // enableSession auto-creates for seamless session registration
+      sessionManager.enableSession('new-session');
+      expect(sessionManager.hasSession('new-session')).toBe(true);
+      expect(sessionManager.isSessionEnabled('new-session')).toBe(true);
+    });
+
+    it('auto-created session has correct initial state', () => {
+      sessionManager.enableSession('new-session');
+      const session = sessionManager.getSession('new-session');
+
+      expect(session).not.toBeUndefined();
+      expect(session?.id).toBe('new-session');
+      expect(session?.enabled).toBe(true);
+      expect(session?.pendingResponse).toBeNull();
+      expect(session?.createdAt).toBeGreaterThan(0);
+      expect(session?.lastActivity).toBeGreaterThan(0);
     });
 
     it('enables existing session', () => {
@@ -36,6 +48,41 @@ describe('SessionManager', () => {
       sessionManager.disableSession('test-session');
       sessionManager.enableSession('test-session');
       expect(sessionManager.isSessionEnabled('test-session')).toBe(true);
+    });
+
+    it('preserves existing session data when enabling', () => {
+      sessionManager.registerSession('test-session', 'Notification', 'test prompt');
+      const originalSession = sessionManager.getSession('test-session');
+      const originalCreatedAt = originalSession?.createdAt;
+
+      sessionManager.disableSession('test-session');
+      sessionManager.enableSession('test-session');
+
+      const updatedSession = sessionManager.getSession('test-session');
+      expect(updatedSession?.createdAt).toBe(originalCreatedAt);
+      // pendingResponse is preserved from registerSession
+      expect(updatedSession?.pendingResponse).not.toBeNull();
+    });
+
+    it('updates lastActivity when enabling existing session', () => {
+      sessionManager.registerSession('test-session', 'Notification', 'test prompt');
+      const session1 = sessionManager.getSession('test-session');
+      const lastActivity1 = session1?.lastActivity ?? 0;
+
+      // Small delay to ensure timestamp differs
+      sessionManager.enableSession('test-session');
+
+      const session2 = sessionManager.getSession('test-session');
+      expect(session2?.lastActivity).toBeGreaterThanOrEqual(lastActivity1);
+    });
+
+    it('is idempotent for already enabled session', () => {
+      sessionManager.enableSession('test-session');
+      sessionManager.enableSession('test-session');
+      sessionManager.enableSession('test-session');
+
+      expect(sessionManager.isSessionEnabled('test-session')).toBe(true);
+      expect(sessionManager.getSessionCount()).toBe(1);
     });
   });
 

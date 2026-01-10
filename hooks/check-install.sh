@@ -1,10 +1,11 @@
 #!/bin/bash
-# SessionStart hook - check if global install exists, show guidance if not
+# SessionStart hook - auto-register session with server, show install guidance
 #
 # This script runs on every session start. It:
-# 1. Checks if global installation is complete
-# 2. Shows a one-time explanation of SESSION-ONLY vs GLOBAL modes
-# 3. Does NOT auto-install anything - user must explicitly run /cca-install
+# 1. Persists session ID for use by bash commands
+# 2. Auto-registers session with server if running (enables automatic notifications)
+# 3. Shows a one-time explanation of SESSION-ONLY vs GLOBAL modes
+# 4. Does NOT auto-install anything - user must explicitly run /cca-install
 #
 # Opt-out: export CLAUDE_CCA_AUTO=0
 
@@ -26,6 +27,24 @@ SESSION_ID=$(echo "$HOOK_INPUT" | grep -o '"session_id":"[^"]*"' | cut -d'"' -f4
 # Persist session ID for bash commands
 if [ -n "$SESSION_ID" ]; then
   echo "$SESSION_ID" > "$SESSION_FILE"
+
+  # Auto-register with server if running (non-blocking)
+  # Find port from either local dev or installed plugin
+  PORT_FILE=""
+  if [ -f "${CLAUDE_PLUGIN_ROOT:-}/port" ]; then
+    PORT_FILE="${CLAUDE_PLUGIN_ROOT}/port"
+  elif [ -f "$HOME/.claude-code-anywhere/port" ]; then
+    PORT_FILE="$HOME/.claude-code-anywhere/port"
+  fi
+
+  if [ -n "$PORT_FILE" ] && [ -f "$PORT_FILE" ]; then
+    PORT=$(cat "$PORT_FILE" 2>/dev/null || true)
+    if [ -n "$PORT" ]; then
+      # Silent background registration - enables session for notifications
+      curl -s -X POST "http://localhost:${PORT}/api/session/${SESSION_ID}/enable" \
+        --max-time 1 >/dev/null 2>&1 &
+    fi
+  fi
 fi
 
 # Opt-out via environment variable

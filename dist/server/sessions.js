@@ -71,15 +71,25 @@ class SessionManager {
     }
     /**
      * Enable notifications for a session
-     * @throws Error if session does not exist
+     * Auto-creates the session if it doesn't exist
      */
     enableSession(sessionId) {
-        const session = this.sessions.get(sessionId);
+        const now = Date.now();
+        let session = this.sessions.get(sessionId);
         if (session === undefined) {
-            throw new Error(`Session ${sessionId} does not exist`);
+            // Auto-create session on enable for seamless registration
+            session = {
+                id: sessionId,
+                createdAt: now,
+                lastActivity: now,
+                enabled: true,
+                pendingResponse: null,
+            };
+            this.sessions.set(sessionId, session);
+            return;
         }
         session.enabled = true;
-        session.lastActivity = Date.now();
+        session.lastActivity = now;
     }
     /**
      * Disable notifications for a session
