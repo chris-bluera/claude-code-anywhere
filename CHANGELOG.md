@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.25](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.24...v0.6.25) (2026-01-10)
+
+
+### Features
+
+* **config:** add user config file support ([93a28da](https://github.com/blueraai/claude-code-anywhere/commit/93a28da430ee5260a630b119b7526b7af7b6a80f))
+
 ## [0.6.24](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.23...v0.6.24) (2026-01-10)
 
 
