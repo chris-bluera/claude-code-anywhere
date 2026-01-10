@@ -35,6 +35,7 @@ export declare function handleRegisterSession(req: IncomingMessage, res: ServerR
 export declare function handleGetResponse(_req: IncomingMessage, res: ServerResponse, sessionId: string): void;
 /**
  * Handle POST /api/session/:id/enable - Enable session
+ * Auto-creates session if it doesn't exist
  */
 export declare function handleEnableSession(_req: IncomingMessage, res: ServerResponse, sessionId: string): void;
 /**

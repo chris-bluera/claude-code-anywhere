@@ -656,7 +656,6 @@ describe('handleRegisterSession', () => {
 
 describe('handleEnableSession', () => {
   let sessionManager: {
-    hasSession: Mock;
     enableSession: Mock;
   };
 
@@ -671,25 +670,22 @@ describe('handleEnableSession', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns 404 when session not found', async () => {
+  it('auto-creates and enables new session', async () => {
     const { handleEnableSession } = await import('../src/server/routes.js');
-
-    sessionManager.hasSession.mockReturnValue(false);
 
     const req = createMockRequest();
     const res = createMockResponse();
 
-    handleEnableSession(req, res, 'nonexistent-session');
+    handleEnableSession(req, res, 'new-session');
 
-    expect(res._statusCode).toBe(404);
-    const body = JSON.parse(res._body) as { error: string };
-    expect(body.error).toBe('Session nonexistent-session not found');
+    expect(res._statusCode).toBe(200);
+    const body = JSON.parse(res._body) as { success: boolean };
+    expect(body.success).toBe(true);
+    expect(sessionManager.enableSession).toHaveBeenCalledWith('new-session');
   });
 
-  it('returns 200 with success:true when session exists', async () => {
+  it('enables existing session', async () => {
     const { handleEnableSession } = await import('../src/server/routes.js');
-
-    sessionManager.hasSession.mockReturnValue(true);
 
     const req = createMockRequest();
     const res = createMockResponse();

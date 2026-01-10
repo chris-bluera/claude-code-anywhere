@@ -296,16 +296,14 @@ export function handleGetResponse(
 
 /**
  * Handle POST /api/session/:id/enable - Enable session
+ * Auto-creates session if it doesn't exist
  */
 export function handleEnableSession(
   _req: IncomingMessage,
   res: ServerResponse,
   sessionId: string
 ): void {
-  if (!sessionManager.hasSession(sessionId)) {
-    sendError(res, 404, `Session ${sessionId} not found`);
-    return;
-  }
+  // enableSession auto-creates if needed
   sessionManager.enableSession(sessionId);
   sendJSON(res, 200, { success: true });
 }
