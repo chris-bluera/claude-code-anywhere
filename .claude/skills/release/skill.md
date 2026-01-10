@@ -41,11 +41,11 @@ After push, three workflows run automatically:
 
 After running `bun run release`, you MUST monitor workflows until ALL complete successfully:
 
-1. Run `gh run list --limit 5` to get workflow run IDs
-2. Monitor the **CI** workflow: `gh run watch <ci-run-id>`
-3. Once CI completes, check **Auto Release** and **Release** workflows
-4. Verify the release was published: `gh release view v<version>`
-5. Report final status to user with release URL
+1. Wait ~20 seconds for workflows to start and complete
+2. Run `gh run list --limit 5` to check all workflow statuses
+3. If any still `in_progress`, wait and re-check
+4. Verify release: `gh release view v<version>`
+5. Report final status table + release URL
 
 **Do NOT consider the release complete until:**
 - All workflows show `completed` with `success` status
@@ -58,12 +58,18 @@ If any workflow fails:
 ## Monitoring Commands
 
 ```bash
-gh run list --limit 5              # See recent runs
-gh run watch <run-id>              # Watch live (blocks until complete)
-gh run view <run-id>               # View completed
-gh run view <run-id> --log-failed  # See failure logs
-gh release view                    # View latest release
+# Efficient (minimal output):
+sleep 20 && gh run list --limit 5  # Wait then check all statuses
+gh release view v<version>          # Verify release exists
+
+# If workflows still running:
+gh run list --limit 5               # Re-check statuses
+
+# Only if failure - get details:
+gh run view <run-id> --log-failed   # See failure logs
 ```
+
+**AVOID:** `gh run watch` - outputs excessive progress updates that waste context.
 
 ## Troubleshooting
 
