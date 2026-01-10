@@ -37,11 +37,29 @@ After push, three workflows run automatically:
 2. **Auto Release** - waits for CI, creates/pushes tag
 3. **Release** - creates GitHub release from tag
 
+## Required Workflow
+
+After running `bun run release`, you MUST monitor workflows until ALL complete successfully:
+
+1. Run `gh run list --limit 5` to get workflow run IDs
+2. Monitor the **CI** workflow: `gh run watch <ci-run-id>`
+3. Once CI completes, check **Auto Release** and **Release** workflows
+4. Verify the release was published: `gh release view v<version>`
+5. Report final status to user with release URL
+
+**Do NOT consider the release complete until:**
+- All workflows show `completed` with `success` status
+- The GitHub release is published and accessible
+
+If any workflow fails:
+- Run `gh run view <run-id> --log-failed` to see error details
+- Report the failure to the user with actionable next steps
+
 ## Monitoring Commands
 
 ```bash
 gh run list --limit 5              # See recent runs
-gh run watch <run-id>              # Watch live
+gh run watch <run-id>              # Watch live (blocks until complete)
 gh run view <run-id>               # View completed
 gh run view <run-id> --log-failed  # See failure logs
 gh release view                    # View latest release
