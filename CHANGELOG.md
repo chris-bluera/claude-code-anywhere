@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.6.30](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.28...v0.6.30) (2026-01-10)
+
+
+### Bug Fixes
+
+* **ci:** prevent releases with failing tests ([b0e3663](https://github.com/blueraai/claude-code-anywhere/commit/b0e3663db0d20cb45600ce683f7cf137c23e54ec))
+* **logging:** enforce logger usage with eslint no-console rule ([2e56342](https://github.com/blueraai/claude-code-anywhere/commit/2e56342a32008a7bf4a691162b5132d11abc610f))
+
 ## [0.6.29](https://github.com/blueraai/claude-code-anywhere/compare/v0.6.28...v0.6.29) (2026-01-10)
 
 
