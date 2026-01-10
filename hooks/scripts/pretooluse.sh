@@ -42,6 +42,11 @@ fi
 # Build approval message with tool details
 MESSAGE="Tool: $TOOL_NAME - Approve? (Y/N)"
 
+# Record request timestamp in milliseconds BEFORE sending notification
+# Any valid response must have a timestamp AFTER this (with 2s tolerance for clock skew)
+REQUEST_TIME_MS=$(($(date +%s) * 1000))
+STALE_THRESHOLD_MS=$((REQUEST_TIME_MS - 2000))
+
 # Register session and send approval request
 curl -s -X POST "$BRIDGE_URL/api/session" \
   -H 'Content-Type: application/json' \
@@ -52,6 +57,15 @@ for i in $(seq 1 60); do
   RESP=$(curl -s "$BRIDGE_URL/api/response/${SESSION_ID}" 2>/dev/null)
 
   if echo "$RESP" | grep -q '"response"'; then
+    # Check if response is fresh (not from a previous request)
+    RESP_TIME_MS=$(echo "$RESP" | jq -r '.timestamp // 0')
+
+    if [ "$RESP_TIME_MS" -lt "$STALE_THRESHOLD_MS" ]; then
+      # Stale response from previous request - discard and keep polling
+      sleep 5
+      continue
+    fi
+
     ANSWER=$(echo "$RESP" | jq -r '.response // ""' | tr '[:upper:]' '[:lower:]')
 
     # Check for approval patterns (flexible matching)

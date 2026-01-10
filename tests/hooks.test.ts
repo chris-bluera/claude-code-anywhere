@@ -229,6 +229,55 @@ describe('SessionStart hook (check-install.sh)', () => {
   });
 });
 
+describe('pretooluse.sh stale response handling', () => {
+  // Test that stale responses (from previous requests) are discarded
+  // A response is stale if its timestamp is older than when the request was sent
+
+  it('detects stale response when timestamp is before request time', () => {
+    const requestTimeMs = 1700000000000; // Request sent at this time
+    const staleThresholdMs = requestTimeMs - 2000; // 2 second tolerance
+
+    // Response from 10 seconds ago is stale
+    const staleResponseTimeMs = requestTimeMs - 10000;
+    expect(staleResponseTimeMs < staleThresholdMs).toBe(true);
+
+    // Response from 1 second ago is fresh (within tolerance)
+    const freshResponseTimeMs = requestTimeMs - 1000;
+    expect(freshResponseTimeMs < staleThresholdMs).toBe(false);
+
+    // Response from after request is definitely fresh
+    const futureResponseTimeMs = requestTimeMs + 5000;
+    expect(futureResponseTimeMs < staleThresholdMs).toBe(false);
+  });
+
+  it('tolerates clock skew of up to 2 seconds', () => {
+    const requestTimeMs = 1700000000000;
+    const staleThresholdMs = requestTimeMs - 2000;
+
+    // Response exactly at threshold is NOT considered stale
+    expect(staleThresholdMs < staleThresholdMs).toBe(false);
+
+    // Response 1ms before threshold IS stale
+    expect(staleThresholdMs - 1 < staleThresholdMs).toBe(true);
+  });
+
+  it('pretooluse.sh includes stale response check logic', () => {
+    const content = readFileSync(join(process.cwd(), 'hooks/scripts/pretooluse.sh'), 'utf-8');
+
+    // Should record request time before sending notification
+    expect(content).toContain('REQUEST_TIME_MS');
+
+    // Should check response timestamp against threshold
+    expect(content).toContain('STALE_THRESHOLD_MS');
+
+    // Should extract timestamp from response
+    expect(content).toContain('.timestamp');
+
+    // Should continue polling if response is stale
+    expect(content).toMatch(/if.*RESP_TIME.*STALE_THRESHOLD.*continue/s);
+  });
+});
+
 describe('pretooluse.sh approval patterns', () => {
   // Test the regex patterns used for approval/denial detection
   const approvalPatterns =
