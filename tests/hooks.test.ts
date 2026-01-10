@@ -228,3 +228,37 @@ describe('SessionStart hook (check-install.sh)', () => {
     });
   });
 });
+
+describe('hook scripts use canonical port path (regression tests)', () => {
+  // These tests ensure hook scripts read from ~/.config/claude-code-anywhere/port
+  // NOT from relative paths like $SCRIPT_DIR/../../port which fail when
+  // the server runs from a different context than the hooks
+
+  const CANONICAL_PORT_PATH = '$HOME/.config/claude-code-anywhere/port';
+  const BROKEN_RELATIVE_PATH = '$SCRIPT_DIR/../../port';
+  const BROKEN_OLD_PATH = '$HOME/.claude-code-anywhere/port';
+
+  it('notification.sh reads from canonical location', () => {
+    const content = readFileSync(join(process.cwd(), 'hooks/scripts/notification.sh'), 'utf-8');
+    expect(content).toContain(CANONICAL_PORT_PATH);
+    expect(content).not.toContain(BROKEN_RELATIVE_PATH);
+  });
+
+  it('stop.sh reads from canonical location', () => {
+    const content = readFileSync(join(process.cwd(), 'hooks/scripts/stop.sh'), 'utf-8');
+    expect(content).toContain(CANONICAL_PORT_PATH);
+    expect(content).not.toContain(BROKEN_RELATIVE_PATH);
+  });
+
+  it('pretooluse.sh reads from canonical location', () => {
+    const content = readFileSync(join(process.cwd(), 'hooks/scripts/pretooluse.sh'), 'utf-8');
+    expect(content).toContain(CANONICAL_PORT_PATH);
+    expect(content).not.toContain(BROKEN_RELATIVE_PATH);
+  });
+
+  it('check-install.sh reads from canonical config location', () => {
+    const content = readFileSync(join(process.cwd(), 'hooks/check-install.sh'), 'utf-8');
+    expect(content).toContain(CANONICAL_PORT_PATH);
+    expect(content).not.toContain(BROKEN_OLD_PATH);
+  });
+});

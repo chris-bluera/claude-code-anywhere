@@ -7,9 +7,8 @@
 # Read JSON input from stdin
 INPUT=$(cat)
 
-# Get port from port file (written by server on startup)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PORT_FILE="$SCRIPT_DIR/../../port"
+# Get port from canonical config location
+PORT_FILE="$HOME/.config/claude-code-anywhere/port"
 PORT=$(cat "$PORT_FILE" 2>/dev/null)
 
 # No port file = server not running

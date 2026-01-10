@@ -33,8 +33,8 @@ if [ -n "$SESSION_ID" ]; then
   PORT_FILE=""
   if [ -f "${CLAUDE_PLUGIN_ROOT:-}/port" ]; then
     PORT_FILE="${CLAUDE_PLUGIN_ROOT}/port"
-  elif [ -f "$HOME/.claude-code-anywhere/port" ]; then
-    PORT_FILE="$HOME/.claude-code-anywhere/port"
+  elif [ -f "$HOME/.config/claude-code-anywhere/port" ]; then
+    PORT_FILE="$HOME/.config/claude-code-anywhere/port"
   fi
 
   if [ -n "$PORT_FILE" ] && [ -f "$PORT_FILE" ]; then
