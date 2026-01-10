@@ -18,9 +18,14 @@ SESSION_FILE="$CONFIG_DIR/current-session-id"
 
 mkdir -p "$CONFIG_DIR"
 
-# Persist session ID for bash commands (CLAUDE_SESSION_ID only available in hooks)
-if [ -n "$CLAUDE_SESSION_ID" ]; then
-  echo "$CLAUDE_SESSION_ID" > "$SESSION_FILE"
+# Read hook input from stdin (JSON with session_id)
+# Claude Code passes hook data via stdin, not environment variables
+HOOK_INPUT=$(cat)
+SESSION_ID=$(echo "$HOOK_INPUT" | grep -o '"session_id":"[^"]*"' | cut -d'"' -f4 2>/dev/null || true)
+
+# Persist session ID for bash commands
+if [ -n "$SESSION_ID" ]; then
+  echo "$SESSION_ID" > "$SESSION_FILE"
 fi
 
 # Opt-out via environment variable
